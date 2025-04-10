@@ -1,0 +1,414 @@
+{
+  "nameOverrides": [
+    {
+      "ADOName": "Eskins, William",
+      "NewName": "William Eskins"
+    }
+  ],
+  "teams": [
+    "Entities",
+    "Calcs and Cash",
+    "Excel Tools",
+    "Data Transfer",
+    "MDS Services"
+  ],
+  "iterations": [
+    "22-09",
+    "22-10",
+    "22-11",
+    "22-12",
+    "22-13_End of Q3",
+    "22-14",
+    "22-15",
+    "22-15 Housekeeping Week",
+    "22-16",
+    "22-17_End of Q4",
+    "23-02",
+    "23-03",
+    "23-04_End of Q1",
+    "23-04 Housekeeping Week",
+    "23-05",
+    "23-06",
+    "23-07",
+    "23-08",
+    "23-09_End of Q2",
+    "23-10 Housekeeping Week",
+    "23-10",
+    "23-11",
+    "23-12",
+    "23-13 End of Q3",
+    "23-14 Housekeeping Week",
+    "23-14",
+    "23-15",
+    "23-16",
+    "23-17",
+    "23-18 End of Q4",
+    "24-01",
+    "24-02",
+    "24-03",
+    "24-04_End of Q1",
+    "24-05 Housekeeping Week",
+    "24-05",
+    "24-06",
+    "24-07",
+    "24-08_End of Q2",
+    "24-09",
+    "24-10",
+    "24-11 Housekeeping Week",
+    "24-11",
+    "24-12",
+    "24-13_End of Q3",
+    "24-14",
+    "24-15",
+    "24-16",
+    "24-17_End of Q4",
+    "25-01",
+    "25-02",
+    "25-03",
+    "25-04 Housekeeping Week",
+    "25-04_End of Q1",
+    "25-05"
+  ],
+  "teamMembers": [
+    {
+      "Name": "Devender Pal Sharma",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": true,
+      "TeamName": "Excel",
+      "BCE": 1.56,
+      "Rating": 5
+    },
+    {
+      "Name": "Shreyansh Srivastava",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 0.57,
+      "Rating": 4
+    },
+    {
+      "Name": "Ilya Adushkevich",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "Rating": 6
+    },
+    {
+      "Name": "Sergei Aliakin",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 1.97,
+      "Rating": 8
+    },
+    {
+      "Name": "Aayush Raj",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 0.81,
+      "Rating": 7
+    },
+    {
+      "Name": "Shubham Prajapati",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 1.11,
+      "Rating": 6
+    },
+    {
+      "Name": "Evgenii Burov",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 1.59,
+      "Rating": 10
+    },
+    {
+      "Name": "Daryna Navitskaya",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 2.21,
+      "Rating": 9
+    },
+    {
+      "Name": "Johnny Olsa",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "BCE": 1.07,
+      "Rating": 10
+    },
+    {
+      "Name": "Ish Grover",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "Rating": 10
+    },
+    {
+      "Name": "Aman Krishna Aman",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "Rating": 8
+    },
+    {
+      "Name": "Lokeswara Reddy Eggina",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Excel",
+      "Rating": 5
+    },
+    {
+      "Name": "Prakash Bhatt",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": true,
+      "TeamName": "Data Transfer",
+      "BCE": 1.28,
+      "Rating": 6
+    },
+    {
+      "Name": "Shajeena Shaik",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Data Transfer",
+      "BCE": 1.47,
+      "Rating": 6
+    },
+    {
+      "Name": "Divya S",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Data Transfer",
+      "BCE": 0.19,
+      "Rating": 6
+    },
+    {
+      "Name": "Aashish Gupta",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Data Transfer",
+      "BCE": 0.91,
+      "Rating": 5
+    },
+    {
+      "Name": "Viktor Bubnov",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Data Transfer",
+      "BCE": 0.73,
+      "Rating": 5
+    },
+    {
+      "Name": "Sindhuja Ponnam",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Data Transfer",
+      "Rating": 7
+    },
+    {
+      "Name": "Patrick Fox",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": true,
+      "TeamName": "Entities",
+      "BCE": 1.12,
+      "Rating": 10
+    },
+    {
+      "Name": "Daniel Marshall",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 3.87,
+      "Rating": 9
+    },
+    {
+      "Name": "Elmira Aldenova",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 2.31,
+      "Rating": 8
+    },
+    {
+      "Name": "Lauri Laidla",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 3.59,
+      "Rating": 9
+    },
+    {
+      "Name": "Satish Reddy Lakkireddy",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 1.27,
+      "Rating": 5
+    },
+    {
+      "Name": "Shubhra Kawatra",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 1.31,
+      "Rating": 5
+    },
+    {
+      "Name": "Yogesh Singh Bisht",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "BCE": 0.80,
+      "Rating": 7
+    },
+    {
+      "Name": "Neha Surelia",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "Rating": 7
+    },
+    {
+      "Name": "Lakshmi Muddineti",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "Rating": 4
+    },
+    {
+      "Name": "Brandon Feenstra",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Entities",
+      "Rating": 8
+    },
+    {
+      "Name": "Denis Menshchikov",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "BCE": 3.81,
+      "Rating": 10
+    },
+    {
+      "Name": "Ekaterina Kuksenok",
+      "Activity": "dev",
+      "IsFTE": false,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "BCE": 1.25,
+      "Rating": 6
+    },
+    {
+      "Name": "Pramveer Singh",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "BCE": 1.39,
+      "Rating": 6
+    },
+    {
+      "Name": "Amit Kumar",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "BCE": 1.56,
+      "Rating": 3
+    },
+    {
+      "Name": "Atul Kumar Gupta",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "BCE": 1.80,
+      "Rating": 5
+    },
+    {
+      "Name": "Prashant Jain",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "Rating": 8
+    },
+    {
+      "Name": "Shubhra Trivedi",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "Calcs",
+      "Rating": 6
+    },
+    {
+      "Name": "William Eskins",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": true,
+      "TeamName": "MDS",
+      "BCE": 1.36,
+      "Rating": 9
+    },
+    {
+      "Name": "Kunal Makwana",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "MDS",
+      "BCE": 2.11,
+      "Rating": 6
+    },
+    {
+      "Name": "George Bogdan Silion",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "MDS",
+      "BCE": 2.80,
+      "Rating": 8
+    },
+    {
+      "Name": "Mohit Saini",
+      "Activity": "qa",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "MDS",
+      "Rating": 8
+    }
+  ]
+}

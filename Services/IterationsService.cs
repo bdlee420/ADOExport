@@ -29,11 +29,14 @@ namespace ADOExport.Services
                 iterationsDto = await SqlDataProvider.GetIterationsAsync();
             }
 
-            var selectedIterations = iterationsDto
-                    .Where(i => requestedIterations.Any(iteration => i.Name.EndsWith(iteration)))
-                    .ToList();
+            if (requestedIterations.Count > 0)
+            {
+                return iterationsDto
+                        .Where(i => requestedIterations.Any(iteration => i.Name.EndsWith(iteration)))
+                        .ToList();
+            }
 
-            return selectedIterations;
+            return iterationsDto;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace ADOExport.Services
                     string query = $"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND ( [System.State] IN ('Done', 'Closed') AND [System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' AND ";
 
                     var conditions = SettingsService.CurrentInputs.Teams
-                        .Select(team => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team}'");
+                        .Select(team => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" ( {string.Join(" OR ", conditions)} ) ";
                     query += " AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect' OR [System.WorkItemType] = 'Deployment' )) ORDER BY [System.IterationPath], [System.AssignedTo]";
                     var queryRequest = new QueryRequest
@@ -155,7 +155,7 @@ namespace ADOExport.Services
                                 {
                                     Project = SettingsService.CurrentSettings.ProjectName,
                                     Pivot = "capacity",
-                                    TeamName = SettingsService.CurrentInputs.Teams.First(),
+                                    TeamName = SettingsService.CurrentInputs.Teams.First().TeamName,
                                     Viewname = "content",
                                 }
                             }

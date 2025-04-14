@@ -12,6 +12,9 @@ namespace ADOExport.Services
                 .Where(t => t != null)
                 .ToList();
 
+            if (employees.Count == 0)
+                return SettingsService.CurrentInputs.TeamMembers;
+
             foreach (var employee in employees)
             {
                 var overrideName = SettingsService.CurrentInputs.NameOverrides.FirstOrDefault(n => n.ADOName == employee.DisplayName);

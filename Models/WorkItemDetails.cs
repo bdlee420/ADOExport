@@ -46,6 +46,8 @@ namespace ADOExport.Models
 
     public class WorkItemDetailsDto
     {
+        public int WorkItemId { get; set; }
+
         public int AreaAdoId { get; set; }
 
         public string IterationPath { get; set; }

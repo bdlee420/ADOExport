@@ -20,6 +20,7 @@ namespace ADOExport.Services
                 .Where(w => w.Fields.AssignedTo != null)
                 .Select(w => new WorkItemDetailsDto
                 {
+                    WorkItemId = w.Id,
                     EmployeeAdoId = w.Fields.AssignedTo.Id,
                     Estimate = w.Fields.OriginalEstimate,
                     IterationPath = w.Fields.IterationPath,

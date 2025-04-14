@@ -5,7 +5,7 @@ namespace ADOExport.Models
     internal class QueryResponse
     {
         [JsonProperty("workItems")]
-        internal List<WorkItem> WorkItems { get; set; }
+        internal required List<WorkItem> WorkItems { get; set; }
     }
 
     internal class WorkItem
@@ -14,6 +14,6 @@ namespace ADOExport.Models
         internal int Id { get; set; }
 
         [JsonProperty("url")]
-        internal string Url { get; set; }
+        internal required string Url { get; set; }
     }
 }

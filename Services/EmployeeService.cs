@@ -6,6 +6,9 @@ namespace ADOExport.Services
     {
         internal static List<TeamMemberDto> GetEmployees(List<WorkItemDetails> workItemDetails)
         {
+            if (SettingsService.CurrentInputs is null)
+                throw new NullReferenceException("SettingsService.CurrentInputs");
+
             var employees = workItemDetails
                 .Select(w => w.Fields.AssignedTo)
                 .Distinct()

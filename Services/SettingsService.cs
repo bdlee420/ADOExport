@@ -5,8 +5,8 @@ namespace ADOExport.Services
 {
     internal static class SettingsService
     {
-        internal static Settings CurrentSettings = new();
-        internal static Inputs CurrentInputs = new();
+        internal static Settings? CurrentSettings = null;
+        internal static Inputs? CurrentInputs = null;
 
         internal async static Task SetInputsAsync()
         {

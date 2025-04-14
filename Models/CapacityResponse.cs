@@ -4,36 +4,36 @@ namespace ADOExport.Models
 {
     internal class CapacityResult : CapacityResponse
     {
-        internal IterationDto Iteration { get; set; }
-        internal Team Team { get; set; }
+        internal required IterationDto Iteration { get; set; }
+        internal required Team Team { get; set; }
     }
     internal class CapacityResponse
     {
         [JsonProperty("teamMembers")]
-        internal List<TeamMemberCapacity> TeamMembers { get; set; }
+        internal required List<TeamMemberCapacity> TeamMembers { get; set; }
     }
 
     internal class TeamMemberCapacity
     {
         [JsonProperty("teamMember")]
-        internal TeamMember TeamMember { get; set; }
+        internal required TeamMember TeamMember { get; set; }
 
         [JsonProperty("activities")]
-        internal List<Activity> Activities { get; set; }
+        internal required List<Activity> Activities { get; set; }
 
         [JsonProperty("daysOff")]
-        internal List<DaysOff> DaysOff { get; set; }
+        internal required List<DaysOff> DaysOff { get; set; }
     }
 
     internal class TeamMember
     {
         [JsonProperty("id")]
-        internal string Id { get; set; }
+        internal required string Id { get; set; }
 
         [JsonProperty("displayName")]
-        internal string DisplayName { get; set; }
+        internal required string DisplayName { get; set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is TeamMember other)
             {
@@ -50,27 +50,27 @@ namespace ADOExport.Models
 
     internal class TeamMemberDto
     {
-        internal string EmployeeAdoId { get; set; }
+        internal required string EmployeeAdoId { get; set; }
 
-        [JsonProperty("Name")]
-        internal string Name { get; set; }
+        [JsonProperty(nameof(Name))]
+        internal required string Name { get; set; }
 
-        [JsonProperty("IsLead")]
+        [JsonProperty(nameof(IsLead))]
         internal bool IsLead { get; set; }
 
-        [JsonProperty("IsFTE")]
+        [JsonProperty(nameof(IsFTE))]
         internal bool IsFTE { get; set; }
 
-        [JsonProperty("Activity")]
-        internal string Activity { get; set; }
+        [JsonProperty(nameof(Activity))]
+        internal required string Activity { get; set; }
 
-        [JsonProperty("TeamName")]
-        internal string TeamName { get; set; }
+        [JsonProperty(nameof(TeamName))]
+        internal required string TeamName { get; set; }
 
-        [JsonProperty("BCE")]
+        [JsonProperty(nameof(BCE))]
         internal decimal BCE { get; set; } = 1.3M;
 
-        [JsonProperty("Rating")]
+        [JsonProperty(nameof(Rating))]
         internal short Rating { get; set; }
     }
 
@@ -89,15 +89,15 @@ namespace ADOExport.Models
         internal decimal CapacityPerDay { get; set; }
 
         [JsonProperty("name")]
-        internal string Name { get; set; }
+        internal required string Name { get; set; }
     }
 
     internal class CapacityDto
     {
         internal int IterationAdoId { get; set; }
-        internal string IterationAdoIdentifier { get; set; }
-        internal string EmployeeAdoId { get; set; }
-        internal string TeamAdoId { get; set; }
+        internal required string IterationAdoIdentifier { get; set; }
+        internal required string EmployeeAdoId { get; set; }
+        internal required string TeamAdoId { get; set; }
         internal int Days { get; set; }
     }
 }

@@ -12,6 +12,12 @@ namespace ADOExport
             var stopwatch = Stopwatch.StartNew();
             Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms - Setup Inputs");
             await SettingsService.SetCurrentSettingsAsync();
+            if (SettingsService.CurrentSettings == null)
+            {
+                Console.WriteLine("No settings!");
+                return;
+            }
+
             await SettingsService.SetInputsAsync();
             if (SettingsService.CurrentInputs == null || SettingsService.CurrentInputs.Teams.Count == 0)
             {
@@ -25,10 +31,7 @@ namespace ADOExport
             var workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(iterationsDto));
             var employeesDto = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees(workItemResult.WorkItemDetails));
 
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Clear WorkItems", () => SqlDataProvider.ClearWorkItems(workItemResult.WorkItemDetailsDtos));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Clear Iterations", () => SqlDataProvider.ClearIterations(iterationsDto));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Clear Capacities", () => SqlDataProvider.ClearDevCapacity(iterationsDto));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems", () => SqlDataProvider.AddWorkItems(workItemResult.WorkItemDetailsDtos));
+            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems", () => SqlDataProvider.AddUpdateWorkItems(workItemResult.WorkItemDetailsDtos));
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees", () => SqlDataProvider.AddEmployees(employeesDto));
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Iterations", () => SqlDataProvider.AddIterations(iterationsDto));

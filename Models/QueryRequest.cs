@@ -5,6 +5,6 @@ namespace ADOExport.Models
     internal class QueryRequest
     {
         [JsonProperty("query")]
-        internal string Query { get; set; }
+        internal required string Query { get; set; }
     }
 }

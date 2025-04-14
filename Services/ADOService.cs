@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿using ADOExport.Common;
 using ADOExport.Models;
-using Newtonsoft.Json;
 
 namespace ADOExport.Services
 {
@@ -11,6 +9,12 @@ namespace ADOExport.Services
         {
             try
             {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
                 var workitems = new List<WorkItem>();
                 foreach (var iteration in iterations)
                 {
@@ -25,7 +29,7 @@ namespace ADOExport.Services
                         Query = query
                     };
 
-                    var queryResponse = await PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                    var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
                     workitems.AddRange(queryResponse.WorkItems);
                 }
                 return workitems;
@@ -33,7 +37,7 @@ namespace ADOExport.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
         }
 
@@ -41,6 +45,9 @@ namespace ADOExport.Services
         {
             try
             {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
                 var workItemDetails = new List<WorkItemDetails>();
                 for (int i = 0; i < workItemIds.Count; i += 200)
                 {
@@ -51,7 +58,7 @@ namespace ADOExport.Services
 
                     var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,System.IterationId,System.AreaPath,System.AreaId&api-version=7.1";
 
-                    var queryResponse = await GetAsync<WorkItemReponse>(url, SettingsService.CurrentSettings.PersonalAccessToken);
+                    var queryResponse = await WebClientHelper.GetAsync<WorkItemReponse>(url, SettingsService.CurrentSettings.PersonalAccessToken);
 
                     workItemDetails.AddRange(queryResponse.Value);
                 }
@@ -61,7 +68,7 @@ namespace ADOExport.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
         }
 
@@ -69,6 +76,9 @@ namespace ADOExport.Services
         {
             try
             {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
                 var capacityResults = new List<CapacityResult>();
                 foreach (var iteration in iterations)
                 {
@@ -76,7 +86,7 @@ namespace ADOExport.Services
                     {
                         try
                         {
-                            var capacityResponse = await GetAsync<CapacityResponse>($"{SettingsService.CurrentSettings.ProjectId}/{team.Id}/_apis/work/teamsettings/iterations/{iteration.Identifier}/capacities", SettingsService.CurrentSettings.PersonalAccessToken);
+                            var capacityResponse = await WebClientHelper.GetAsync<CapacityResponse>($"{SettingsService.CurrentSettings.ProjectId}/{team.Id}/_apis/work/teamsettings/iterations/{iteration.Identifier}/capacities", SettingsService.CurrentSettings.PersonalAccessToken);
                             var capacityResult = new CapacityResult
                             {
                                 Iteration = iteration,
@@ -99,7 +109,7 @@ namespace ADOExport.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
         }
 
@@ -107,14 +117,17 @@ namespace ADOExport.Services
         {
             try
             {
-                var teamResponse = await GetAsync<TeamResponse>($"_apis/projects/{SettingsService.CurrentSettings.ProjectName}/teams?api-version=6.0", SettingsService.CurrentSettings.PersonalAccessToken);
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                var teamResponse = await WebClientHelper.GetAsync<TeamResponse>($"_apis/projects/{SettingsService.CurrentSettings.ProjectName}/teams?api-version=6.0", SettingsService.CurrentSettings.PersonalAccessToken);
                 return teamResponse.Value;
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
         }
 
@@ -122,7 +135,10 @@ namespace ADOExport.Services
         {
             try
             {
-                var areaResponse = await GetAsync<AreaResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/classificationNodes?$depth=1&api-version=6.0\r\n", SettingsService.CurrentSettings.PersonalAccessToken);
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                var areaResponse = await WebClientHelper.GetAsync<AreaResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/classificationNodes?$depth=1&api-version=6.0\r\n", SettingsService.CurrentSettings.PersonalAccessToken);
                 return areaResponse.Value
                     .First(v => v.Name == SettingsService.CurrentSettings.ProjectName)
                     .Children;
@@ -130,7 +146,7 @@ namespace ADOExport.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
         }
 
@@ -138,12 +154,18 @@ namespace ADOExport.Services
         {
             try
             {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
                 var iterationRequest = new IterationRequest
                 {
-                    ContributionIds = new List<string>
-                     {
+                    ContributionIds =
+                     [
                          "ms.vss-work-web.new-team-wit-settings-data-provider"
-                     },
+                     ],
                     DataProviderContext = new DataProviderContext
                     {
                         Properties = new DataProviderContextProperties
@@ -163,7 +185,7 @@ namespace ADOExport.Services
                     }
                 };
                 var url = "_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
-                var iterationResponse = await PostAsync<IterationRequest, IterationResponse>(url, iterationRequest, SettingsService.CurrentSettings.AuthToken);
+                var iterationResponse = await WebClientHelper.PostAsync<IterationRequest, IterationResponse>(url, iterationRequest, SettingsService.CurrentSettings.AuthToken);
                 var iterations = iterationResponse.DataProviders.DataProviderMeta.PreviousIterations;
                 iterations.Add(iterationResponse.DataProviders.DataProviderMeta.CurrentIteration);
                 return iterations;
@@ -171,64 +193,8 @@ namespace ADOExport.Services
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return null;
+                throw;
             }
-        }
-
-        private static void SetClientHeaders(HttpClient client, string token)
-        {
-            client.DefaultRequestHeaders.Accept.Add(
-                   new MediaTypeWithQualityHeaderValue("application/json"));
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                Convert.ToBase64String(
-                    Encoding.ASCII.GetBytes(
-                        string.Format("{0}:{1}", "", token))));
-        }
-
-        private static async Task<Tres> PostAsync<Treq, Tres>(string url, Treq request, string token)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                SetClientHeaders(client, token);
-
-                var iterationRequestString = JsonConvert.SerializeObject(request);
-                var content = new StringContent(iterationRequestString, Encoding.UTF8, "application/json");
-                url = $"https://dev.azure.com/{SettingsService.CurrentSettings.RootUrl}/{url}";
-                using (HttpResponseMessage response = client.PostAsync(url, content).Result)
-                {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        return JsonConvert.DeserializeObject<Tres>(responseBody);
-                    }
-                    else if(string.IsNullOrEmpty( responseBody))
-                    {
-                        Console.WriteLine($"Status Code: {response.StatusCode}");
-                        throw new Exception("Failed");
-                    }
-                    {
-                        var error = JsonConvert.DeserializeObject<ErrorReponse>(responseBody);
-                        Console.WriteLine($"Status Code: {response.StatusCode}; Message: {error.Message}");
-                        throw new Exception(error.Message);
-                    }
-                }
-            }
-        }
-
-        private static async Task<Tres> GetAsync<Tres>(string url, string token)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                SetClientHeaders(client, token);
-                url = $"https://dev.azure.com/{SettingsService.CurrentSettings.RootUrl}/{url}";
-                using (HttpResponseMessage response = client.GetAsync(url).Result)
-                {
-                    response.EnsureSuccessStatusCode();
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<Tres>(responseBody);
-                }
-            }
-        }
+        }        
     }
 }

@@ -20,7 +20,7 @@ namespace ADOExport.Services
                         totalDaysOff += LogicHelper.CountBusinessDays(daysOff.Start, daysOff.End);
                     }
                     var daysWorked = daysInSprint - totalDaysOff;
-                    foreach (var activities in teamMember.Activities)
+                    foreach (var _ in teamMember.Activities)
                     {
                         capacitiesDto.Add(new CapacityDto
                         {
@@ -33,7 +33,13 @@ namespace ADOExport.Services
                     }
                 }
             }
-            return capacitiesDto;
+
+            var uniqueCapacitiesDto = capacitiesDto
+               .GroupBy(e => new { e.EmployeeAdoId, e.IterationAdoIdentifier, e.TeamAdoId }) // Group by both properties
+               .Select(g => g.First()) // Select the first entry from each group
+               .ToList();
+
+            return uniqueCapacitiesDto;
         }
     }
 }

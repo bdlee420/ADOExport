@@ -3,13 +3,7 @@
 namespace ADOExport.Services
 {
     internal static class WorkItemService
-    {
-        internal class WorkItemsResult
-        {
-            internal List<WorkItemDetailsDto> WorkItemDetailsDtos { get; set; }
-            internal List<WorkItemDetails> WorkItemDetails { get; set; }
-        }
-
+    {       
         internal async static Task<WorkItemsResult> GetWorkItemsAsync(List<IterationDto> iterations)
         {
             var workItems = await ADOService.GetWorkItemIds(iterations);

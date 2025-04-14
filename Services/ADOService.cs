@@ -5,9 +5,9 @@ using Newtonsoft.Json;
 
 namespace ADOExport.Services
 {
-    public class ADOService
+    internal class ADOService
     {
-        public static async Task<List<WorkItem>> GetWorkItemIds(List<IterationDto> iterations)
+        internal static async Task<List<WorkItem>> GetWorkItemIds(List<IterationDto> iterations)
         {
             try
             {
@@ -37,7 +37,7 @@ namespace ADOExport.Services
             }
         }
 
-        public static async Task<List<WorkItemDetails>> GetWorkItemDetails(List<int> workItemIds)
+        internal static async Task<List<WorkItemDetails>> GetWorkItemDetails(List<int> workItemIds)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace ADOExport.Services
             }
         }
 
-        public static async Task<List<CapacityResult>> GetCapacities(List<IterationDto> iterations, List<Team> teams)
+        internal static async Task<List<CapacityResult>> GetCapacities(List<IterationDto> iterations, List<Team> teams)
         {
             try
             {
@@ -103,7 +103,7 @@ namespace ADOExport.Services
             }
         }
 
-        public static async Task<List<Team>> GetTeams()
+        internal static async Task<List<Team>> GetTeams()
         {
             try
             {
@@ -118,7 +118,7 @@ namespace ADOExport.Services
             }
         }
 
-        public static async Task<List<Area>> GetAreas()
+        internal static async Task<List<Area>> GetAreas()
         {
             try
             {
@@ -134,7 +134,7 @@ namespace ADOExport.Services
             }
         }
 
-        public static async Task<List<Iteration>> GetIterations()
+        internal static async Task<List<Iteration>> GetIterations()
         {
             try
             {

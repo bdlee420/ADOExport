@@ -1,14 +1,17 @@
-﻿namespace ADOExport.Models
+﻿using Newtonsoft.Json;
+
+namespace ADOExport.Models
 {
-    public class TeamResponse
+    internal class TeamResponse
     {
-        public List<Team> Value { get; set; }
+        [JsonProperty("value")]
+        internal List<Team> Value { get; set; }
     }
 
-    public class Team
+    internal class Team
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
+        internal string Id { get; set; }
+        internal string Name { get; set; }
+        internal string Url { get; set; }
     }
 }

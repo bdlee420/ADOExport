@@ -2,59 +2,59 @@
 
 namespace ADOExport.Models
 {
-    public class IterationRequest
+    internal class IterationRequest
     {
         [JsonProperty("contributionIds")]
-        public List<string> ContributionIds { get; set; }
+        internal List<string> ContributionIds { get; set; }
 
         [JsonProperty("dataProviderContext")]
-        public DataProviderContext DataProviderContext { get; set; }
+        internal DataProviderContext DataProviderContext { get; set; }
 
     }
 
-    public class DataProviderContext
+    internal class DataProviderContext
     {
         [JsonProperty("properties")]
-        public DataProviderContextProperties Properties { get; set; }
+        internal DataProviderContextProperties Properties { get; set; }
 
     }
 
-    public class DataProviderContextProperties
+    internal class DataProviderContextProperties
     {
         [JsonProperty("sourcePage")]
-        public SourcePage SourcePage { get; set; }
+        internal SourcePage SourcePage { get; set; }
 
     }
 
-    public class SourcePage
+    internal class SourcePage
     {
         [JsonProperty("url")]
-        public string Url { get; set; }
+        internal string Url { get; set; }
 
         [JsonProperty("routeId")]
-        public string RouteId { get; set; }
+        internal string RouteId { get; set; }
 
         [JsonProperty("routeValues")]
-        public RouteValues RouteValues { get; set; }
+        internal RouteValues RouteValues { get; set; }
 
     }
 
-    public class RouteValues
+    internal class RouteValues
     {
         [JsonProperty("project")]
-        public string Project { get; set; }
+        internal string Project { get; set; }
 
         [JsonProperty("pivot")]
-        public string Pivot { get; set; }
+        internal string Pivot { get; set; }
 
         [JsonProperty("teamName")]
-        public string TeamName { get; set; }
+        internal string TeamName { get; set; }
 
         [JsonProperty("viewname")]
-        public string Viewname { get; set; }
+        internal string Viewname { get; set; }
 
         [JsonProperty("iteration")]
-        public string Iteration { get; set; }
+        internal string Iteration { get; set; }
 
     }
 }

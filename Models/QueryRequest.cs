@@ -2,9 +2,9 @@
 
 namespace ADOExport.Models
 {
-    public class QueryRequest
+    internal class QueryRequest
     {
         [JsonProperty("query")]
-        public string Query { get; set; }
+        internal string Query { get; set; }
     }
 }

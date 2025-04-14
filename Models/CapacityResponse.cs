@@ -1,29 +1,37 @@
-﻿namespace ADOExport.Models
+﻿using Newtonsoft.Json;
+
+namespace ADOExport.Models
 {
-    public class CapacityResult : CapacityResponse
+    internal class CapacityResult : CapacityResponse
     {
-        public IterationDto Iteration { get; set; }
-        public Team Team { get; set; }
+        internal IterationDto Iteration { get; set; }
+        internal Team Team { get; set; }
     }
-    public class CapacityResponse
+    internal class CapacityResponse
     {
-        public List<TeamMemberCapacity> TeamMembers { get; set; }
-    }
-
-    public class TeamMemberCapacity
-    {
-        public TeamMember TeamMember { get; set; }
-
-        public List<Activity> Activities { get; set; }
-
-        public List<DaysOff> DaysOff { get; set; }
+        [JsonProperty("teamMembers")]
+        internal List<TeamMemberCapacity> TeamMembers { get; set; }
     }
 
-    public class TeamMember
+    internal class TeamMemberCapacity
     {
-        public string Id { get; set; }
+        [JsonProperty("teamMember")]
+        internal TeamMember TeamMember { get; set; }
 
-        public string DisplayName { get; set; }
+        [JsonProperty("activities")]
+        internal List<Activity> Activities { get; set; }
+
+        [JsonProperty("daysOff")]
+        internal List<DaysOff> DaysOff { get; set; }
+    }
+
+    internal class TeamMember
+    {
+        [JsonProperty("id")]
+        internal string Id { get; set; }
+
+        [JsonProperty("displayName")]
+        internal string DisplayName { get; set; }
 
         public override bool Equals(object obj)
         {
@@ -40,36 +48,56 @@
         }
     }
 
-    public class TeamMemberDto
+    internal class TeamMemberDto
     {
-        public string EmployeeAdoId { get; set; }
-        public string Name { get; set; }
-        public bool IsLead { get; set; }
-        public bool IsFTE { get; set; }
-        public string Activity { get; set; }
-        public string TeamName { get; set; }
-        public decimal BCE { get; set; } = 1.3M;
-        public short Rating { get; set; }
+        internal string EmployeeAdoId { get; set; }
+
+        [JsonProperty("Name")]
+        internal string Name { get; set; }
+
+        [JsonProperty("IsLead")]
+        internal bool IsLead { get; set; }
+
+        [JsonProperty("IsFTE")]
+        internal bool IsFTE { get; set; }
+
+        [JsonProperty("Activity")]
+        internal string Activity { get; set; }
+
+        [JsonProperty("TeamName")]
+        internal string TeamName { get; set; }
+
+        [JsonProperty("BCE")]
+        internal decimal BCE { get; set; } = 1.3M;
+
+        [JsonProperty("Rating")]
+        internal short Rating { get; set; }
     }
 
-    public class DaysOff
+    internal class DaysOff
     {
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
+        [JsonProperty("start")]
+        internal DateTime Start { get; set; }
+
+        [JsonProperty("end")]
+        internal DateTime End { get; set; }
     }
 
-    public class Activity
+    internal class Activity
     {
-        public decimal CapacityPerDay { get; set; }
-        public string Name { get; set; }
+        [JsonProperty("capacityPerDay")]
+        internal decimal CapacityPerDay { get; set; }
+
+        [JsonProperty("name")]
+        internal string Name { get; set; }
     }
 
-    public class CapacityDto
+    internal class CapacityDto
     {
-        public int IterationAdoId { get; set; }
-        public string IterationAdoIdentifier { get; set; }
-        public string EmployeeAdoId { get; set; }
-        public string TeamAdoId { get; set; }
-        public int Days { get; set; }
+        internal int IterationAdoId { get; set; }
+        internal string IterationAdoIdentifier { get; set; }
+        internal string EmployeeAdoId { get; set; }
+        internal string TeamAdoId { get; set; }
+        internal int Days { get; set; }
     }
 }

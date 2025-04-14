@@ -2,41 +2,41 @@
 
 namespace ADOExport.Models
 {
-    public class IterationResponse
+    internal class IterationResponse
     {
-        public DataProvider DataProviders { get; set; }
+        internal DataProvider DataProviders { get; set; }
     }
 
-    public class DataProvider
+    internal class DataProvider
     {
         [JsonProperty("ms.vss-work-web.new-team-wit-settings-data-provider")]
-        public DataProviderMeta DataProviderMeta { get; set; }
+        internal DataProviderMeta DataProviderMeta { get; set; }
     }
 
-    public class DataProviderMeta
+    internal class DataProviderMeta
     {
-        public List<Iteration> PreviousIterations { get; set; }
-        public Iteration CurrentIteration { get; set; }
+        internal List<Iteration> PreviousIterations { get; set; }
+        internal Iteration CurrentIteration { get; set; }
     }
 
-    public class Iteration
+    internal class Iteration
     {
-        public int NodeId { get; set; }
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime FinishDate { get; set; }
-        public string FriendlyPath { get; set; }
+        internal int NodeId { get; set; }
+        internal string Id { get; set; }
+        internal string Name { get; set; }
+        internal DateTime StartDate { get; set; }
+        internal DateTime FinishDate { get; set; }
+        internal string FriendlyPath { get; set; }
     }
 
-    public class IterationDto
+    internal class IterationDto
     {
-        public int Id { get; set; }
-        public string Identifier { get; set; }
-        public string Name { get; set; }
-        public string Path { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public string YearQuarter { get; set; }
+        internal int Id { get; set; }
+        internal string Identifier { get; set; }
+        internal string Name { get; set; }
+        internal string Path { get; set; }
+        internal DateTime StartDate { get; set; }
+        internal DateTime EndDate { get; set; }
+        internal string YearQuarter { get; set; }
     }
 }

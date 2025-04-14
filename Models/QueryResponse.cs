@@ -1,13 +1,19 @@
-﻿namespace ADOExport.Models
+﻿using Newtonsoft.Json;
+
+namespace ADOExport.Models
 {
-    public class QueryResponse
+    internal class QueryResponse
     {
-        public List<WorkItem> WorkItems { get; set; }
+        [JsonProperty("workItems")]
+        internal List<WorkItem> WorkItems { get; set; }
     }
 
-    public class WorkItem
+    internal class WorkItem
     {
-        public int Id { get; set; }
-        public string Url { get; set; }
+        [JsonProperty("id")]
+        internal int Id { get; set; }
+
+        [JsonProperty("url")]
+        internal string Url { get; set; }
     }
 }

@@ -1,22 +1,22 @@
 ﻿namespace ADOExport.Models
 {
-    public class AreaResponse
+    internal class AreaResponse
     {
-        public int Count { get; set; }
-        public List<AreaRoot> Value { get; set; }
+        internal int Count { get; set; }
+        internal List<AreaRoot> Value { get; set; }
     }
 
-    public class AreaRoot
+    internal class AreaRoot
     {
-        public string Name { get; set; }
-        public List<Area> Children { get; set; }
+        internal string Name { get; set; }
+        internal List<Area> Children { get; set; }
     }
 
-    public class Area
+    internal class Area
     {
-        public int Id { get; set; }
-        public string Identifier { get; set; }
-        public string Name { get; set; }
-        public string Path { get; set; }
+        internal int Id { get; set; }
+        internal string Identifier { get; set; }
+        internal string Name { get; set; }
+        internal string Path { get; set; }
     }
 }

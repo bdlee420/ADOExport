@@ -35,6 +35,8 @@ namespace ADOExport
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees", () => SqlDataProvider.AddEmployees(employeesDto));
             ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Iterations", () => SqlDataProvider.AddIterations(iterationsDto));
+
+            Console.WriteLine($"Total Elapsed Time: {stopwatch.ElapsedMilliseconds}ms");
         }           
     }
 }

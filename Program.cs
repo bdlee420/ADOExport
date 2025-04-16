@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using ADOExport.Common;
 using ADOExport.Data;
+using ADOExport.Models;
 using ADOExport.Services;
 
 namespace ADOExport
@@ -37,7 +38,7 @@ namespace ADOExport
             //Report - Employee Reporting
             var selected_teams_report_2 = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.EmployeeReporting));
             var capacitiesDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Capacities", () => CapacitiesService.GetCapacitiesAsync(selected_teams_report_2, iterationsDto));
-            var workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_report_2, iterationsDto, "Compliance_Security"));
+            var workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_report_2, iterationsDto, SettingsService.CurrentInputs.Tags));
             var employeesDto = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees(workItemResult.WorkItemDetails));
 
             //Store Data in SQL
@@ -55,7 +56,8 @@ namespace ADOExport
         enum Reports
         {
             PlannedDone = 1,
-            EmployeeReporting = 2
+            EmployeeReporting = 2,
+            Compliance = 3
         }
     }
 }

@@ -4,12 +4,12 @@ namespace ADOExport.Services
 {
     internal static class WorkItemService
     {
-        internal async static Task<WorkItemsResult> GetWorkItemsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, string tag)
+        internal async static Task<WorkItemsResult> GetWorkItemsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
         {
             var workItems = await ADOService.GetWorkItemIds(teams, iterations);
 
             //Get all Task Ids that are tagged
-            var taggedIds = await GetTaggedIdsAsync(teams, iterations, tag);
+            var taggedIds = await GetTaggedIdsAsync(teams, iterations, tags);
 
             var workItemIds = workItems.Select(w => w.Id).ToList();
             var workItemDetails = await ADOService.GetWorkItemDetails(workItemIds);
@@ -37,10 +37,10 @@ namespace ADOExport.Services
             };
         }
 
-        private async static Task<HashSet<int>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, string tag)
+        private async static Task<HashSet<int>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
         {
             //Get all Task Ids that are tagged
-            var workItemsTagged = await ADOService.GetWorkItemIdsByTag(teams, iterations, tag);
+            var workItemsTagged = await ADOService.GetWorkItemIdsByTag(teams, iterations, tags);
             var taggedIds = workItemsTagged
                 .Where(w => w.Rel == "System.LinkTypes.Hierarchy-Forward" && w.Target != null && w.Target.Id > 0)
                 .Select(w => w.Target.Id)

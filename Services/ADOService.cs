@@ -150,7 +150,7 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<WorkItemChildren>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<IterationDto> iterations, string tag)
+        internal static async Task<List<WorkItemChildren>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
         {
             try
             {
@@ -164,7 +164,10 @@ namespace ADOExport.Services
                 foreach (var iteration in iterations)
                 {
                     string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
-                    query += $" AND [Source].[System.Tags] CONTAINS '{tag}' AND ( [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
+
+                    var conditions_tags = tags.Select(tag => $"[Source].[System.Tags] CONTAINS '{tag}'");
+                    query += $" AND ( {string.Join(" OR ", conditions_tags)} ) ";
+                    query += $" AND ( [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
                     query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
                     var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" AND ( {string.Join(" OR ", conditions)} ) ";

@@ -4,6 +4,9 @@ namespace ADOExport.Models
 {
     internal class Inputs
     {
+        [JsonProperty("tags")]
+        internal required List<string> Tags { get; set; }
+
         [JsonProperty("teams")]
         internal required List<TeamOverrides> Teams { get; set; }
 

@@ -31,10 +31,13 @@ namespace ADOExport.Services
 
             if (requestedIterations.Count > 0)
             {
-                return iterationsDto
+
+                iterationsDto = iterationsDto
                         .Where(i => requestedIterations.Any(iteration => i.Name.EndsWith(iteration)))
-                        .ToList();
+                        .ToList();               
             }
+
+            Console.WriteLine($"Get Iterations Count = {iterationsDto.Count}");
 
             return iterationsDto;
         }

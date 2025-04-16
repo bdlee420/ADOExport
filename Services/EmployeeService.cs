@@ -15,6 +15,8 @@ namespace ADOExport.Services
                 .Where(t => t != null)
                 .ToList();
 
+            Console.WriteLine($"Get Employees Count = {SettingsService.CurrentInputs.TeamMembers.Count}");
+
             if (employees.Count == 0)
                 return SettingsService.CurrentInputs.TeamMembers;
 
@@ -27,8 +29,9 @@ namespace ADOExport.Services
 
             foreach (var teamMember in SettingsService.CurrentInputs.TeamMembers)
             {
-                var employee = employees.First(e => e.DisplayName == teamMember.Name);
-                teamMember.EmployeeAdoId = employee.Id;
+                var employee = employees.FirstOrDefault(e => e.DisplayName == teamMember.Name);
+                if (employee != null)
+                    teamMember.EmployeeAdoId = employee.Id;
             }
 
             return SettingsService.CurrentInputs.TeamMembers;

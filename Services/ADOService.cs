@@ -5,7 +5,117 @@ namespace ADOExport.Services
 {
     internal class ADOService
     {
-        internal static async Task<List<WorkItem>> GetWorkItemIds(List<IterationDto> iterations)
+        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_Start(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitems = new List<WorkItem>();
+
+                string query = $@"  SELECT [System.Id] 
+                                    FROM workitems 
+                                    WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
+                                    AND [System.State] NOT IN ('Done', 'Closed', 'Removed') 
+                                    AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect')
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'";
+
+                var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
+                query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
+
+                query += $" ASOF '{asOf}' ";
+
+                var queryRequest = new QueryRequest
+                {
+                    Query = query
+                };
+
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                workitems.AddRange(queryResponse.WorkItems);
+
+                return workitems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_End(DateTime asOf, List<int> ids, IterationDto iteration)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitems = new List<WorkItem>();
+
+                string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
+                                    AND [System.State] IN ('Done', 'Closed', 'Removed') 
+                                    AND [System.Id] IN ({string.Join(",", ids)}) 
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'
+                                    ASOF '{asOf}'";               
+
+                var queryRequest = new QueryRequest
+                {
+                    Query = query
+                };
+
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                workitems.AddRange(queryResponse.WorkItems);
+
+                return workitems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_End_NoFilter(DateTime asOf, List<int> ids, IterationDto iteration)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitems = new List<WorkItem>();
+
+                string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
+                                    AND [System.Id] IN ({string.Join(",", ids)}) 
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'
+                                    ASOF '{asOf}'";
+
+                var queryRequest = new QueryRequest
+                {
+                    Query = query
+                };
+
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                workitems.AddRange(queryResponse.WorkItems);
+
+                return workitems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItem>> GetWorkItemIds(IEnumerable<Team> teams, List<IterationDto> iterations)
         {
             try
             {
@@ -20,8 +130,7 @@ namespace ADOExport.Services
                 {
                     string query = $"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND ( [System.State] IN ('Done', 'Closed') AND [System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' AND ";
 
-                    var conditions = SettingsService.CurrentInputs.Teams
-                        .Select(team => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
+                    var conditions = teams.Select(team => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" ( {string.Join(" OR ", conditions)} ) ";
                     query += " AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect' OR [System.WorkItemType] = 'Deployment' )) ORDER BY [System.IterationPath], [System.AssignedTo]";
                     var queryRequest = new QueryRequest
@@ -41,7 +150,46 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<WorkItemDetails>> GetWorkItemDetails(List<int> workItemIds)
+        internal static async Task<List<WorkItemChildren>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<IterationDto> iterations, string tag)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitems = new List<WorkItemChildren>();
+                foreach (var iteration in iterations)
+                {
+                    string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
+                    query += $" AND [Source].[System.Tags] CONTAINS '{tag}' AND ( [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
+                    query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
+                    var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
+                    query += $" AND ( {string.Join(" OR ", conditions)} ) ";
+                    query += $" AND [Target].[System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' ";
+                    query += $") ORDER BY [System.Id] MODE (MustContain)";
+
+
+                    var queryRequest = new QueryRequest
+                    {
+                        Query = query
+                    };
+
+                    var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryChildrenResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                    workitems.AddRange(queryResponse.WorkItemRelations);
+                }
+                return workitems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItemDetails>> GetWorkItemDetails(List<int> workItemIds, DateTime? asOf = null)
         {
             try
             {
@@ -56,7 +204,9 @@ namespace ADOExport.Services
 
                     var workItemIdsString = string.Join(",", batch);
 
-                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,System.IterationId,System.AreaPath,System.AreaId&api-version=7.1";
+                    var asOfFilter = asOf.HasValue ? $"asOf={asOf.Value}&" : string.Empty;
+
+                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,System.IterationId,System.AreaPath,System.AreaId&{asOfFilter}api-version=7.1";
 
                     var queryResponse = await WebClientHelper.GetAsync<WorkItemReponse>(url, SettingsService.CurrentSettings.PersonalAccessToken);
 
@@ -72,7 +222,7 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<CapacityResult>> GetCapacities(List<IterationDto> iterations, List<Team> teams)
+        internal static async Task<List<CapacityResult>> GetCapacities(List<IterationDto> iterations, IEnumerable<Team> teams)
         {
             try
             {
@@ -195,6 +345,6 @@ namespace ADOExport.Services
                 Console.WriteLine(ex.ToString());
                 throw;
             }
-        }        
+        }
     }
 }

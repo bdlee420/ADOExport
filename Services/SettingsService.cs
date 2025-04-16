@@ -1,4 +1,5 @@
-﻿using ADOExport.Models;
+﻿using ADOExport.Common;
+using ADOExport.Models;
 using Newtonsoft.Json;
 
 namespace ADOExport.Services
@@ -11,10 +12,12 @@ namespace ADOExport.Services
         internal async static Task SetInputsAsync()
         {
             string jsonString = await File.ReadAllTextAsync("inputs.json");
-            var inputs = JsonConvert.DeserializeObject<Inputs>(jsonString);
+            var inputs = JsonConvert.DeserializeObject<Inputs>(jsonString);            
 
             if (inputs == null)
                 return;
+
+            CurrentInputs = inputs;
 
             try
             {
@@ -22,19 +25,38 @@ namespace ADOExport.Services
                 var inputsOverride = JsonConvert.DeserializeObject<Inputs>(jsonOverrideString);
 
                 if (inputsOverride == null)
+                {
+                    UpdateAreas(CurrentInputs.Teams);
                     return;
+                }
 
-                inputs.Teams.AddRange(inputsOverride.Teams);
-                inputs.Iterations.AddRange(inputsOverride.Iterations);
-                inputs.NameOverrides.AddRange(inputsOverride.NameOverrides);
-                inputs.TeamMembers.AddRange(inputsOverride.TeamMembers);
+                if (inputsOverride.Teams.AnySafe())
+                    CurrentInputs.Teams.AddRange(inputsOverride.Teams);
+
+                if (inputsOverride.Iterations.AnySafe())
+                    CurrentInputs.Iterations.AddRange(inputsOverride.Iterations);
+
+                if (inputsOverride.NameOverrides.AnySafe())
+                    CurrentInputs.NameOverrides.AddRange(inputsOverride.NameOverrides);
+
+                if (inputsOverride.TeamMembers.AnySafe())
+                    CurrentInputs.TeamMembers.AddRange(inputsOverride.TeamMembers);
+
+                if (inputsOverride.TeamsOverrides.AnySafe())
+                    CurrentInputs.Teams = inputsOverride.TeamsOverrides;
+
+                UpdateAreas(CurrentInputs.Teams);
             }
             catch
             {
                 Console.WriteLine("no input override file found.");
             }
+        }
 
-            CurrentInputs = inputs;
+        private static void UpdateAreas(List<TeamOverrides> teams)
+        {
+            foreach (var team in teams)
+                team.AreaName = team.AreaName ?? team.TeamName;
         }
 
         internal async static Task SetCurrentSettingsAsync()

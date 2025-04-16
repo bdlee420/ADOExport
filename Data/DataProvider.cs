@@ -229,7 +229,115 @@ namespace ADOExport.Data
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-        }       
+        }
+
+        internal static void AddTeams(List<Team> data)
+        {
+            using var connection = new SqlConnection(GetConnectionString());
+            connection.Open();
+
+            try
+            {
+                var sql = "CREATE TABLE #Teams (Id VARCHAR(255), Name VARCHAR(255), AreaName VARCHAR(255));";
+                connection.Execute(sql);
+
+                using (var bulkCopy = new SqlBulkCopy(connection))
+                {
+                    bulkCopy.DestinationTableName = "#Teams";
+
+                    // Write data to the server
+                    using var dataTable = new DataTable();
+                    dataTable.Columns.Add("Id", typeof(string));
+                    dataTable.Columns.Add("Name", typeof(string));
+                    dataTable.Columns.Add("AreaName", typeof(string));
+
+                    foreach (var item in data)
+                    {
+                        dataTable.Rows.Add(
+                            item.Id,
+                            item.Name,
+                            item.AreaName
+                        );
+                    }
+
+                    bulkCopy.WriteToServer(dataTable);
+                }
+
+                var mergeQuery = @"
+                            MERGE INTO Teams AS target
+                            USING (
+                                SELECT T.Id, T.Name, A.Id as AreaId 
+                                FROM #Teams T
+                                JOIN Areas A ON A.Name = T.AreaName
+                            ) AS source
+                            ON target.Id = source.Id
+                            WHEN MATCHED THEN
+                                UPDATE SET
+                                    target.Name = source.Name,
+                                    target.AreaId = source.AreaId
+                            WHEN NOT MATCHED THEN
+                                INSERT (Id, Name, AreaId)
+                                VALUES (source.Id, source.Name, source.AreaId);";
+
+                connection.Execute(mergeQuery);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+        internal static void AddAreas(List<Area> data)
+        {
+            using var connection = new SqlConnection(GetConnectionString());
+            connection.Open();
+
+            try
+            {
+                var sql = "CREATE TABLE #Areas (Id int, Name VARCHAR(255));";
+                connection.Execute(sql);
+
+                using (var bulkCopy = new SqlBulkCopy(connection))
+                {
+                    bulkCopy.DestinationTableName = "#Areas";
+
+                    // Write data to the server
+                    using var dataTable = new DataTable();
+                    dataTable.Columns.Add("Id", typeof(int));
+                    dataTable.Columns.Add("Name", typeof(string));
+
+                    foreach (var item in data)
+                    {
+                        dataTable.Rows.Add(
+                            item.Id,
+                            item.Name
+                        );
+                    }
+
+                    bulkCopy.WriteToServer(dataTable);
+                }
+
+                var mergeQuery = @"
+                            MERGE INTO Areas AS target
+                            USING (
+                                SELECT Id, Name
+                                FROM #Areas
+                            ) AS source
+                            ON target.Id = source.Id
+                            WHEN MATCHED THEN
+                                UPDATE SET
+                                    target.Name = source.Name
+                            WHEN NOT MATCHED THEN
+                                INSERT (Id, Name)
+                                VALUES (source.Id, source.Name);";
+
+                connection.Execute(mergeQuery);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
 
         internal static void AddUpdateWorkItems(List<WorkItemDetailsDto> data)
         {
@@ -238,7 +346,7 @@ namespace ADOExport.Data
 
             try
             {
-                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), AreaAdoId int);";
+                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), AreaAdoId int, IsCompliance bit);";
                 connection.Execute(sql);
 
                 using (var bulkCopy = new SqlBulkCopy(connection))
@@ -254,6 +362,7 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("WorkItemType", typeof(string));
                     dataTable.Columns.Add("Estimate", typeof(decimal));
                     dataTable.Columns.Add("AreaAdoId", typeof(int));
+                    dataTable.Columns.Add("IsCompliance", typeof(bool));
 
                     foreach (var item in data)
                     {
@@ -264,7 +373,8 @@ namespace ADOExport.Data
                             item.IterationId,
                             item.WorkItemType,
                             item.Estimate,
-                            item.AreaAdoId
+                            item.AreaAdoId,
+                            item.IsCompliance
                         );
                     }
 
@@ -273,7 +383,7 @@ namespace ADOExport.Data
 
                 var mergeQuery = @"
                             MERGE INTO WorkItems AS target
-                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId FROM #WorkItems) AS source
+                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, IsCompliance FROM #WorkItems) AS source
                             ON target.WorkItemId = source.WorkItemId
                             WHEN MATCHED THEN
                                 UPDATE SET
@@ -282,10 +392,11 @@ namespace ADOExport.Data
                                     target.IterationId = source.IterationId,
                                     target.WorkItemType = source.WorkItemType,
                                     target.Estimate = source.Estimate,
-                                    target.AreaAdoId = source.AreaAdoId
+                                    target.AreaAdoId = source.AreaAdoId,
+                                    target.IsCompliance = source.IsCompliance
                             WHEN NOT MATCHED THEN
-                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId)
-                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.AreaAdoId);";
+                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, IsCompliance)
+                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.AreaAdoId, source.IsCompliance);";
                 
                 connection.Execute(mergeQuery);               
             }
@@ -293,6 +404,68 @@ namespace ADOExport.Data
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-        }       
+        }
+
+        internal static void AddUpdateWorkItemsPlannedDone(List<WorkItemPlannedData> data)
+        {
+            using var connection = new SqlConnection(GetConnectionString());
+            connection.Open();
+
+            try
+            {
+                var sql = "CREATE TABLE #WorkItemsPlannedDone(WorkItemId int, EmployeeAdoId VARCHAR(255), IterationId int, AreaAdoId int, IsDone bit, IsDeleted bit);";
+                connection.Execute(sql);
+
+                using (var bulkCopy = new SqlBulkCopy(connection))
+                {
+                    bulkCopy.DestinationTableName = "#WorkItemsPlannedDone";
+
+                    // Write data to the server
+                    using var dataTable = new DataTable();
+                    dataTable.Columns.Add("WorkItemId", typeof(int));
+                    dataTable.Columns.Add("EmployeeAdoId", typeof(string));
+                    dataTable.Columns.Add("IterationId", typeof(int));
+                    dataTable.Columns.Add("AreaAdoId", typeof(int));
+                    dataTable.Columns.Add("IsDone", typeof(bool));
+                    dataTable.Columns.Add("IsDeleted", typeof(bool));
+
+                    foreach (var item in data)
+                    {
+                        dataTable.Rows.Add(
+                            item.WorkItemId,
+                            item.EmployeeAdoId,
+                            item.IterationId,
+                            item.AreaAdoId,
+                            item.IsDone,
+                            item.IsDeleted
+                        );
+                    }
+
+                    bulkCopy.WriteToServer(dataTable);
+                }
+
+                var mergeQuery = @"
+                            MERGE INTO WorkItemsPlannedDone AS target
+                            USING (SELECT WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsDeleted FROM #WorkItemsPlannedDone) AS source
+                            ON target.WorkItemId = source.WorkItemId
+                            AND target.IterationId = source.IterationId
+                            WHEN MATCHED THEN
+                                UPDATE SET
+                                    target.EmployeeAdoId = source.EmployeeAdoId,
+                                    target.IterationId = source.IterationId,
+                                    target.AreaAdoId = source.AreaAdoId,
+                                    target.IsDone = source.IsDone,
+                                    target.IsDeleted = source.IsDeleted
+                            WHEN NOT MATCHED THEN
+                                INSERT (WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsDeleted)
+                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationId, source.AreaAdoId, source.IsDone, source.IsDeleted);";
+
+                connection.Execute(mergeQuery);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
     }
 }

@@ -65,6 +65,8 @@ namespace ADOExport.Models
         internal required string EmployeeAdoId { get; set; }
 
         internal decimal Estimate { get; set; }
+
+        internal bool IsCompliance { get; set; }
     }
 
 }

@@ -5,7 +5,7 @@ namespace ADOExport.Services
 {
     internal class CapacitiesService
     {
-        internal async static Task<List<CapacityDto>> GetCapacitiesAsync(List<IterationDto> iterations, List<Team> teams)
+        internal async static Task<List<CapacityDto>> GetCapacitiesAsync(IEnumerable<Team> teams, List<IterationDto> iterations)
         {
             var capacities = await ADOService.GetCapacities(iterations, teams);
             var capacitiesDto = new List<CapacityDto>();
@@ -38,6 +38,8 @@ namespace ADOExport.Services
                .GroupBy(e => new { e.EmployeeAdoId, e.IterationAdoIdentifier, e.TeamAdoId }) // Group by both properties
                .Select(g => g.First()) // Select the first entry from each group
                .ToList();
+
+            Console.WriteLine($"Get Capacities Count = {uniqueCapacitiesDto.Count}");
 
             return uniqueCapacitiesDto;
         }

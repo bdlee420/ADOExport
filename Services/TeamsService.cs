@@ -8,12 +8,32 @@ namespace ADOExport.Services
         {
             var teams = await ADOService.GetTeams();
 
-            if (requestedTeams.Count == 0)
-                return teams;
+            Console.WriteLine($"Get Teams Count = {teams.Count}");
 
-            var selectedTeams = teams
-                .Where(t => requestedTeams.Exists(rt => rt.TeamName == t.Name))
-                .ToList();
+            return GetSelectedTeams(requestedTeams, teams);
+        }
+
+        private static List<Team> GetSelectedTeams(List<TeamOverrides> requestedTeams, List<Team> allTeams)
+        {
+            foreach (var team in allTeams)
+                team.AreaName = team.Name;
+
+            if (requestedTeams.Count == 0)
+                return allTeams;
+
+            var selectedTeams = new List<Team>();
+            foreach (var team in allTeams)
+            {
+                var selectedTeam = requestedTeams.FirstOrDefault(rt => rt.TeamName == team.Name);
+                if (selectedTeam != null)
+                {
+                    team.AreaName = selectedTeam.AreaName;
+                    team.ReportIds = selectedTeam.ReportIds;
+                    selectedTeams.Add(team);
+                }
+            }
+
+            Console.WriteLine($"Get Selected Teams Count = {selectedTeams.Count}");
 
             return selectedTeams;
         }

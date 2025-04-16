@@ -7,6 +7,9 @@ namespace ADOExport.Models
         [JsonProperty("teams")]
         internal required List<TeamOverrides> Teams { get; set; }
 
+        [JsonProperty("teamsOverrides")]
+        internal required List<TeamOverrides> TeamsOverrides { get; set; }
+
         [JsonProperty("iterations")]
         internal required List<string> Iterations { get; set; }
 
@@ -24,6 +27,9 @@ namespace ADOExport.Models
 
         [JsonProperty("areaName")]
         public required string AreaName { get; set; }
+
+        [JsonProperty("reportIds")]
+        public required List<int> ReportIds { get; set; }
     }
 
     internal class NameOverrides

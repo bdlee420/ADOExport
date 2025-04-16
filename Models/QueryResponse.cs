@@ -16,4 +16,19 @@ namespace ADOExport.Models
         [JsonProperty("url")]
         internal required string Url { get; set; }
     }
+
+    internal class QueryChildrenResponse
+    {
+        [JsonProperty("workItemRelations")]
+        internal required List<WorkItemChildren> WorkItemRelations { get; set; }
+    }
+
+    internal class WorkItemChildren
+    {
+        [JsonProperty("target")]
+        internal WorkItem Target { get; set; }
+
+        [JsonProperty("rel")]
+        internal string? Rel { get; set; }
+    }
 }

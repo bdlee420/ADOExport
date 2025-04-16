@@ -18,5 +18,9 @@ namespace ADOExport.Models
 
         [JsonProperty("url")]
         internal required string Url { get; set; }
+
+        internal required string AreaName { get; set; }
+
+        internal required List<int> ReportIds { get; set; }
     }
 }

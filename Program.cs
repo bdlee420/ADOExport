@@ -26,29 +26,78 @@ namespace ADOExport
                 return;
             }
 
-            //Get Meta Data
-            var areas = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Areas", () => AreaService.GetAreasAsync());
-            var selectedTeams = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Teams", () => TeamsService.GetTeamsAsync(SettingsService.CurrentInputs.Teams));
-            var iterationsDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Iterations", () => IterationsService.GetIterationsAsync(SettingsService.CurrentInputs.Iterations));
+            var selectedTeams = new List<Team>();
+            var selected_teams_planned = Enumerable.Empty<Team>();
+            var selected_teams_employee_reporting = Enumerable.Empty<Team>();
+            var selected_teams_tags = Enumerable.Empty<Team>();
+            var iterationsDto = new List<IterationDto>();
+            var workItemResult = new WorkItemsResult();
 
-            //Report - Planned Done
-            var selected_teams_report_1 = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.PlannedDone));
-            var workItemPlannedData = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItemPlannedData", () => WorkItemPlannedService.GetWorkItemPlannedData(selected_teams_report_1, iterationsDto));
+            bool runPlannedDone = SettingsService.CurrentInputs.RunSettings.LoadPlannedDone;
+            bool runEmployees = SettingsService.CurrentInputs.RunSettings.LoadEmployees;
+            bool runAreas = SettingsService.CurrentInputs.RunSettings.LoadAreas;
+            bool runCapacities = SettingsService.CurrentInputs.RunSettings.LoadCapacities;
 
-            //Report - Employee Reporting
-            var selected_teams_report_2 = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.EmployeeReporting));
-            var capacitiesDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Capacities", () => CapacitiesService.GetCapacitiesAsync(selected_teams_report_2, iterationsDto));
-            var workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_report_2, iterationsDto, SettingsService.CurrentInputs.Tags));
-            var employeesDto = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees(workItemResult.WorkItemDetails));
+            bool runWorkItems = SettingsService.CurrentInputs.RunSettings.LoadWorkItems
+                || SettingsService.CurrentInputs.RunSettings.LoadEmployees;                   
+            
+            bool runIterations = SettingsService.CurrentInputs.RunSettings.LoadIterations 
+                || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
+                || SettingsService.CurrentInputs.RunSettings.LoadCapacities
+                || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone;
 
-            //Store Data in SQL
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Areas", () => SqlDataProvider.AddAreas(areas));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Teams", () => SqlDataProvider.AddTeams(selectedTeams));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems Planned/Done", () => SqlDataProvider.AddUpdateWorkItemsPlannedDone(workItemPlannedData)); 
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems", () => SqlDataProvider.AddUpdateWorkItems(workItemResult.WorkItemDetailsDtos));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees", () => SqlDataProvider.AddEmployees(employeesDto));
-            ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Iterations", () => SqlDataProvider.AddIterations(iterationsDto));            
+            bool runTeams = SettingsService.CurrentInputs.RunSettings.LoadTeams
+                || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone
+                || SettingsService.CurrentInputs.RunSettings.LoadCapacities
+                || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
+                || SettingsService.CurrentInputs.RunSettings.LoadEmployees;
+
+            if (runIterations)
+            {
+                iterationsDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Iterations", () => IterationsService.GetIterationsAsync(SettingsService.CurrentInputs.Iterations));
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Iterations", () => SqlDataProvider.AddIterations(iterationsDto));
+            }
+
+            if (runTeams)
+            {
+                var teams = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Teams", () => TeamsService.GetTeamsAsync());
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Teams", () => SqlDataProvider.AddTeams(teams));
+                selectedTeams = TeamsService.GetSelectedTeams(SettingsService.CurrentInputs.Teams, teams);
+                selected_teams_planned = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.PlannedDone));
+                selected_teams_employee_reporting = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.EmployeeReporting));
+                selected_teams_tags = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.Tags));
+            }            
+
+            if (runCapacities)
+            {
+                var capacitiesDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Capacities", () => CapacitiesService.GetCapacitiesAsync(selected_teams_employee_reporting, iterationsDto));
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
+            }            
+
+            if (runWorkItems)
+            {
+                workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_tags, iterationsDto, SettingsService.CurrentInputs.Tags));
+                if (workItemResult.WorkItemDetailsDtos != null)
+                    ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems", () => SqlDataProvider.AddUpdateWorkItems(workItemResult.WorkItemDetailsDtos));
+            }
+
+            if (runEmployees && workItemResult.WorkItemDetails != null)
+            {
+                var employeesDto = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees(workItemResult.WorkItemDetails));
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees", () => SqlDataProvider.AddEmployees(employeesDto));
+            }
+
+            if (runAreas)
+            {
+                var areas = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Areas", () => AreaService.GetAreasAsync());
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Areas", () => SqlDataProvider.AddAreas(areas));
+            }
+
+            if (runPlannedDone)
+            {
+                var workItemPlannedData = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItemPlannedData", () => WorkItemPlannedService.GetWorkItemPlannedData(selected_teams_planned, iterationsDto));
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems Planned/Done", () => SqlDataProvider.AddUpdateWorkItemsPlannedDone(workItemPlannedData));
+            }
 
             Console.WriteLine($"Total Elapsed Time: {stopwatch.ElapsedMilliseconds}ms");
         }
@@ -57,7 +106,7 @@ namespace ADOExport
         {
             PlannedDone = 1,
             EmployeeReporting = 2,
-            Compliance = 3
+            Tags = 3
         }
     }
 }

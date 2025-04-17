@@ -4,16 +4,17 @@ namespace ADOExport.Services
 {
     internal class TeamsService
     {
-        internal async static Task<List<Team>> GetTeamsAsync(List<TeamOverrides> requestedTeams)
+        internal async static Task<List<Team>> GetTeamsAsync()
         {
             var teams = await ADOService.GetTeams();
 
             Console.WriteLine($"Get Teams Count = {teams.Count}");
 
-            return GetSelectedTeams(requestedTeams, teams);
+            return teams;
+            //return GetSelectedTeams(requestedTeams, teams);
         }
 
-        private static List<Team> GetSelectedTeams(List<TeamOverrides> requestedTeams, List<Team> allTeams)
+        internal static List<Team> GetSelectedTeams(List<TeamOverrides> requestedTeams, List<Team> allTeams)
         {
             foreach (var team in allTeams)
                 team.AreaName = team.Name;

@@ -48,6 +48,9 @@ namespace ADOExport.Services
                 if (inputsOverride.Tags.AnySafe())
                     CurrentInputs.Tags = inputsOverride.Tags;
 
+                if (inputsOverride.RunSettings != null)
+                    CurrentInputs.RunSettings = inputsOverride.RunSettings;
+
                 UpdateAreas(CurrentInputs.Teams);
             }
             catch

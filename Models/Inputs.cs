@@ -4,6 +4,9 @@ namespace ADOExport.Models
 {
     internal class Inputs
     {
+        [JsonProperty("runSettings")]
+        internal required RunSettings RunSettings { get; set; }
+
         [JsonProperty("tags")]
         internal required List<string> Tags { get; set; }
 
@@ -21,6 +24,30 @@ namespace ADOExport.Models
 
         [JsonProperty("teamMembers")]
         internal required List<TeamMemberDto> TeamMembers { get; set; }
+    }
+
+    internal class RunSettings
+    {
+        [JsonProperty("loadAreas")]
+        public required bool LoadAreas { get; set; }
+
+        [JsonProperty("loadTeams")]
+        public required bool LoadTeams { get; set; }
+
+        [JsonProperty("loadCapacities")]
+        public required bool LoadCapacities { get; set; }
+
+        [JsonProperty("loadIterations")]
+        public required bool LoadIterations { get; set; }
+
+        [JsonProperty("loadEmployees")]
+        public required bool LoadEmployees { get; set; }
+
+        [JsonProperty("loadPlannedDone")]
+        public required bool LoadPlannedDone { get; set; }
+
+        [JsonProperty("loadWorkItems")]
+        public required bool LoadWorkItems { get; set; }
     }
 
     internal class TeamOverrides

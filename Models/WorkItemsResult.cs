@@ -2,7 +2,7 @@
 {
     internal class WorkItemsResult
     {
-        internal required List<WorkItemDetailsDto> WorkItemDetailsDtos { get; set; }
-        internal required List<WorkItemDetails> WorkItemDetails { get; set; }
+        internal List<WorkItemDetailsDto>? WorkItemDetailsDtos { get; set; }
+        internal List<WorkItemDetails>? WorkItemDetails { get; set; }
     }
 }

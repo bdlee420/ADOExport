@@ -1,4 +1,13 @@
 {
+  "runSettings": {
+    "loadAreas": true,
+    "loadTeams": true,
+    "loadCapacities": true,
+    "loadPlannedDone": true,
+    "loadWorkItems": true,
+    "loadEmployees": true,
+    "loadIterations": true
+  },
   "tags": [],
   "teams": [],
   "teamsOverrides": [],

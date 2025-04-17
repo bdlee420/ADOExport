@@ -11,52 +11,18 @@ namespace ADOExport.Services
 
         internal async static Task SetInputsAsync()
         {
-            string jsonString = await File.ReadAllTextAsync("inputs.json");
-            var inputs = JsonConvert.DeserializeObject<Inputs>(jsonString);            
+            string jsonOverrideString = await File.ReadAllTextAsync("inputs.override.json");
+            var inputsOverride = JsonConvert.DeserializeObject<Inputs>(jsonOverrideString);
 
-            if (inputs == null)
+            if (inputsOverride == null)
                 return;
 
-            CurrentInputs = inputs;
+            CurrentInputs = inputsOverride;
 
-            try
-            {
-                string jsonOverrideString = await File.ReadAllTextAsync("inputs.override.json");
-                var inputsOverride = JsonConvert.DeserializeObject<Inputs>(jsonOverrideString);
+            if (inputsOverride.TeamsOverrides.AnySafe())
+                CurrentInputs.Teams = inputsOverride.TeamsOverrides;
 
-                if (inputsOverride == null)
-                {
-                    UpdateAreas(CurrentInputs.Teams);
-                    return;
-                }
-
-                if (inputsOverride.Teams.AnySafe())
-                    CurrentInputs.Teams.AddRange(inputsOverride.Teams);
-
-                if (inputsOverride.Iterations.AnySafe())
-                    CurrentInputs.Iterations.AddRange(inputsOverride.Iterations);
-
-                if (inputsOverride.NameOverrides.AnySafe())
-                    CurrentInputs.NameOverrides.AddRange(inputsOverride.NameOverrides);
-
-                if (inputsOverride.TeamMembers.AnySafe())
-                    CurrentInputs.TeamMembers.AddRange(inputsOverride.TeamMembers);
-
-                if (inputsOverride.TeamsOverrides.AnySafe())
-                    CurrentInputs.Teams = inputsOverride.TeamsOverrides;
-
-                if (inputsOverride.Tags.AnySafe())
-                    CurrentInputs.Tags = inputsOverride.Tags;
-
-                if (inputsOverride.RunSettings != null)
-                    CurrentInputs.RunSettings = inputsOverride.RunSettings;
-
-                UpdateAreas(CurrentInputs.Teams);
-            }
-            catch
-            {
-                Console.WriteLine("no input override file found.");
-            }
+            UpdateAreas(CurrentInputs.Teams);            
         }
 
         private static void UpdateAreas(List<TeamOverrides> teams)
@@ -67,49 +33,15 @@ namespace ADOExport.Services
 
         internal async static Task SetCurrentSettingsAsync()
         {
-            string jsonString = await File.ReadAllTextAsync("appsettings.json");
-            var settings = JsonConvert.DeserializeObject<Settings>(jsonString);
-
-            if (settings == null)
+            string jsonOverrideString = await File.ReadAllTextAsync("appsettings.override.json");
+            var settingsOverride = JsonConvert.DeserializeObject<Settings>(jsonOverrideString);
+            
+            if (settingsOverride == null)
+            {
                 return;
-
-            try
-            {
-                string jsonOverrideString = await File.ReadAllTextAsync("appsettings.override.json");
-                var settingsOverride = JsonConvert.DeserializeObject<Settings>(jsonOverrideString);
-
-                if (settingsOverride == null)
-                {
-                    CurrentSettings = settings;
-                    return;
-                }
-
-                if (!string.IsNullOrEmpty(settingsOverride.PersonalAccessToken))
-                    settings.PersonalAccessToken = settingsOverride.PersonalAccessToken;
-
-                if (!string.IsNullOrEmpty(settingsOverride.AuthToken))
-                    settings.AuthToken = settingsOverride.AuthToken;
-
-                if (!string.IsNullOrEmpty(settingsOverride.ProjectId))
-                    settings.ProjectId = settingsOverride.ProjectId;
-
-                if (!string.IsNullOrEmpty(settingsOverride.ProjectName))
-                    settings.ProjectName = settingsOverride.ProjectName;
-
-                if (!string.IsNullOrEmpty(settingsOverride.ProjectNameUrl))
-                    settings.ProjectNameUrl = settingsOverride.ProjectNameUrl;
-
-                if (!string.IsNullOrEmpty(settingsOverride.ConnectionString))
-                    settings.ConnectionString = settingsOverride.ConnectionString;
-
-                if (!string.IsNullOrEmpty(settingsOverride.RootUrl))
-                    settings.RootUrl = settingsOverride.RootUrl;
             }
-            catch
-            {
-                Console.WriteLine("no settings override file found.");
-            }
-            CurrentSettings = settings;
+
+            CurrentSettings = settingsOverride;
         }
     }
 }

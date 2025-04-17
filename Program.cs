@@ -15,14 +15,14 @@ namespace ADOExport
             await SettingsService.SetCurrentSettingsAsync();
             if (SettingsService.CurrentSettings == null)
             {
-                Console.WriteLine("No settings!");
+                Console.WriteLine("Must have valid appsettings.override.json file!");
                 return;
             }
 
             await SettingsService.SetInputsAsync();
-            if (SettingsService.CurrentInputs == null || SettingsService.CurrentInputs.Teams.Count == 0)
+            if (SettingsService.CurrentInputs == null)
             {
-                Console.WriteLine("No inputs!");
+                Console.WriteLine("Must have valid inputs.override.json file!");
                 return;
             }
 

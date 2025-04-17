@@ -9,9 +9,40 @@
     "loadIterations": true
   },
   "tags": [],
-  "teams": [],
-  "teamsOverrides": [],
-  "iterations": [],
-  "nameOverrides": [],
-  "teamMembers": []
+  "teams": [
+    {
+      "teamName": "My Team A",
+      "reportIds": [ 1, 2, 3 ]
+    }    
+  ],
+  "teamsOverrides": [
+    {
+      "teamName": "My Team A",
+      "reportIds": [ 1, 2, 3 ]
+    },
+    {
+      "teamName": "My Team B",
+      "reportIds": [ 1, 2, 3 ]
+    }  
+  ],
+  "iterations": [
+    "25-05"
+  ],
+  "nameOverrides": [
+    {
+      "ADOName": "ADO Team Member Name",
+      "NewName": "New Override Name"
+    }
+  ],
+  "teamMembers": [
+    {
+      "Name": "My Employee",
+      "Activity": "dev",
+      "IsFTE": true,
+      "IsLead": false,
+      "TeamName": "His ADO Team Name",
+      "BCE": 1.0,
+      "Rating": 7
+    }
+  ]
 }

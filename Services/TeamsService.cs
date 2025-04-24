@@ -11,7 +11,6 @@ namespace ADOExport.Services
             Console.WriteLine($"Get Teams Count = {teams.Count}");
 
             return teams;
-            //return GetSelectedTeams(requestedTeams, teams);
         }
 
         internal static List<Team> GetSelectedTeams(List<TeamOverrides> requestedTeams, List<Team> allTeams)

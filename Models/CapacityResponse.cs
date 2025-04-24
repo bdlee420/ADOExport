@@ -2,12 +2,30 @@
 
 namespace ADOExport.Models
 {
-    internal class CapacityResult : CapacityResponse
+    internal class CapacityResponse
+    {
+        [JsonProperty("dataProviders")]
+        internal required CapacityDataProvider DataProviders { get; set; }
+    }
+
+    internal class CapacityDataProvider
+    {
+        [JsonProperty("ms.vss-work-web.sprints-hub-capacity-data-provider")]
+        internal required CapacityDataProviderMeta DataProviderMeta { get; set; }
+    }
+
+    internal class CapacityDataProviderMeta
+    {
+        [JsonProperty("userCapacities")]
+        internal required List<TeamMemberCapacity> UserCapacities { get; set; }
+    }   
+
+    internal class CapacityResult : CapacityResponse2
     {
         internal required IterationDto Iteration { get; set; }
         internal required Team Team { get; set; }
     }
-    internal class CapacityResponse
+    internal class CapacityResponse2
     {
         [JsonProperty("teamMembers")]
         internal required List<TeamMemberCapacity> TeamMembers { get; set; }
@@ -15,7 +33,7 @@ namespace ADOExport.Models
 
     internal class TeamMemberCapacity
     {
-        [JsonProperty("teamMember")]
+        [JsonProperty("teamMemberIdentityRef")]
         internal required TeamMember TeamMember { get; set; }
 
         [JsonProperty("activities")]
@@ -99,5 +117,6 @@ namespace ADOExport.Models
         internal required string EmployeeAdoId { get; set; }
         internal required string TeamAdoId { get; set; }
         internal int Days { get; set; }
+        internal bool IsDev { get; set; }
     }
 }

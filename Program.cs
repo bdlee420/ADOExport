@@ -37,20 +37,24 @@ namespace ADOExport
             bool runEmployees = SettingsService.CurrentInputs.RunSettings.LoadEmployees;
             bool runAreas = SettingsService.CurrentInputs.RunSettings.LoadAreas;
             bool runCapacities = SettingsService.CurrentInputs.RunSettings.LoadCapacities;
+            bool runTags = SettingsService.CurrentInputs.RunSettings.LoadTags;
 
             bool runWorkItems = SettingsService.CurrentInputs.RunSettings.LoadWorkItems
-                || SettingsService.CurrentInputs.RunSettings.LoadEmployees;                   
-            
-            bool runIterations = SettingsService.CurrentInputs.RunSettings.LoadIterations 
+                || SettingsService.CurrentInputs.RunSettings.LoadEmployees
+                || SettingsService.CurrentInputs.RunSettings.LoadTags;
+
+            bool runIterations = SettingsService.CurrentInputs.RunSettings.LoadIterations
                 || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
                 || SettingsService.CurrentInputs.RunSettings.LoadCapacities
-                || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone;
+                || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone
+                || SettingsService.CurrentInputs.RunSettings.LoadTags;
 
             bool runTeams = SettingsService.CurrentInputs.RunSettings.LoadTeams
                 || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone
                 || SettingsService.CurrentInputs.RunSettings.LoadCapacities
                 || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
-                || SettingsService.CurrentInputs.RunSettings.LoadEmployees;
+                || SettingsService.CurrentInputs.RunSettings.LoadEmployees
+                || SettingsService.CurrentInputs.RunSettings.LoadTags;
 
             if (runIterations)
             {
@@ -61,24 +65,28 @@ namespace ADOExport
             if (runTeams)
             {
                 var teams = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Teams", () => TeamsService.GetTeamsAsync());
-                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Teams", () => SqlDataProvider.AddTeams(teams));
                 selectedTeams = TeamsService.GetSelectedTeams(SettingsService.CurrentInputs.Teams, teams);
                 selected_teams_planned = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.PlannedDone));
                 selected_teams_employee_reporting = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.EmployeeReporting));
                 selected_teams_tags = selectedTeams.Where(s => s.ReportIds.Contains((int)Reports.Tags));
-            }            
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Teams", () => SqlDataProvider.AddTeams(selectedTeams));
+            }
 
             if (runCapacities)
             {
                 var capacitiesDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Capacities", () => CapacitiesService.GetCapacitiesAsync(selected_teams_employee_reporting, iterationsDto));
                 ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
-            }            
+            }
 
             if (runWorkItems)
             {
-                workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_tags, iterationsDto, SettingsService.CurrentInputs.Tags));
+                workItemResult = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get WorkItems", () => WorkItemService.GetWorkItemsAsync(selected_teams_tags, iterationsDto, SettingsService.CurrentInputs.Tags, runTags));
+
                 if (workItemResult.WorkItemDetailsDtos != null)
                     ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItems", () => SqlDataProvider.AddUpdateWorkItems(workItemResult.WorkItemDetailsDtos));
+
+                if (runTags && workItemResult.WorkItemTags != null)
+                    ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add WorkItemTags", () => SqlDataProvider.AddWorkItemTags(workItemResult.WorkItemTags));
             }
 
             if (runEmployees && workItemResult.WorkItemDetails != null)

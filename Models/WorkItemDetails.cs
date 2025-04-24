@@ -66,7 +66,7 @@ namespace ADOExport.Models
 
         internal decimal Estimate { get; set; }
 
-        internal bool IsCompliance { get; set; }
+        internal string ParentType { get; set; }
     }
 
 }

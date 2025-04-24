@@ -33,7 +33,6 @@ namespace ADOExport.Models
 
         [JsonProperty("routeValues")]
         internal required RouteValues RouteValues { get; set; }
-
     }
 
     internal class RouteValues
@@ -49,5 +48,8 @@ namespace ADOExport.Models
 
         [JsonProperty("viewname")]
         internal required string Viewname { get; set; }
+
+        [JsonProperty("iteration")]
+        internal string? Iteration { get; set; }
     }
 }

@@ -48,6 +48,9 @@ namespace ADOExport.Models
 
         [JsonProperty("loadWorkItems")]
         public required bool LoadWorkItems { get; set; }
+
+        [JsonProperty("loadTags")]
+        public required bool LoadTags { get; set; }
     }
 
     internal class TeamOverrides

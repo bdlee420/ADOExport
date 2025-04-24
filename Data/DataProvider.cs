@@ -30,7 +30,7 @@ namespace ADOExport.Data
 
             try
             {
-                var sql = "CREATE TABLE #DevCapacity (EmployeeAdoId VARCHAR(255), IterationAdoId int, IterationAdoIdentifier VARCHAR(255), TeamAdoId VARCHAR(255), Days int);";
+                var sql = "CREATE TABLE #DevCapacity (EmployeeAdoId VARCHAR(255), IterationAdoId int, IterationAdoIdentifier VARCHAR(255), TeamAdoId VARCHAR(255), Days int, IsDev bit);";
                 connection.Execute(sql);
 
                 using (var bulkCopy = new SqlBulkCopy(connection))
@@ -44,6 +44,7 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("IterationAdoIdentifier", typeof(string));
                     dataTable.Columns.Add("TeamAdoId", typeof(string));
                     dataTable.Columns.Add("Days", typeof(int));
+                    dataTable.Columns.Add("IsDev", typeof(bool));
 
                     foreach (var item in data)
                     {
@@ -52,7 +53,8 @@ namespace ADOExport.Data
                             item.IterationAdoId,
                             item.IterationAdoIdentifier,
                             item.TeamAdoId,
-                            item.Days
+                            item.Days,
+                            item.IsDev
                         );
                     }
 
@@ -62,7 +64,7 @@ namespace ADOExport.Data
                 // Insert each product into the database
                 var mergeQuery = @"
                     MERGE INTO DevCapacity AS target
-                    USING (SELECT EmployeeAdoId, IterationAdoId, IterationAdoIdentifier, TeamAdoId, Days FROM #DevCapacity) AS source
+                    USING (SELECT EmployeeAdoId, IterationAdoId, IterationAdoIdentifier, TeamAdoId, Days, IsDev FROM #DevCapacity) AS source
                     ON target.EmployeeAdoId = source.EmployeeAdoId
                     AND target.IterationAdoIdentifier = source.IterationAdoIdentifier
                     AND target.TeamAdoId = source.TeamAdoId
@@ -72,10 +74,11 @@ namespace ADOExport.Data
                             target.IterationAdoId = source.IterationAdoId,
                             target.IterationAdoIdentifier = source.IterationAdoIdentifier,
                             target.TeamAdoId = source.TeamAdoId,
-                            target.Days = source.Days
+                            target.Days = source.Days,
+                            target.IsDev = source.IsDev
                     WHEN NOT MATCHED THEN
-                        INSERT (EmployeeAdoId, IterationAdoId, IterationAdoIdentifier, TeamAdoId, Days)
-                        VALUES (source.EmployeeAdoId, source.IterationAdoId, source.IterationAdoIdentifier, source.TeamAdoId, source.Days);";
+                        INSERT (EmployeeAdoId, IterationAdoId, IterationAdoIdentifier, TeamAdoId, Days, IsDev)
+                        VALUES (source.EmployeeAdoId, source.IterationAdoId, source.IterationAdoIdentifier, source.TeamAdoId, source.Days, source.IsDev);";
 
                 connection.Execute(mergeQuery);
             }
@@ -286,6 +289,54 @@ namespace ADOExport.Data
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
+        internal static void AddWorkItemTags(List<WorkItemTag> data)
+        {
+            using var connection = new SqlConnection(GetConnectionString());
+            connection.Open();
+
+            try
+            {
+                var sql = "CREATE TABLE #WorkItemTags (WorkItemId int, Tag VARCHAR(255));";
+                connection.Execute(sql);
+
+                using (var bulkCopy = new SqlBulkCopy(connection))
+                {
+                    bulkCopy.DestinationTableName = "#WorkItemTags";
+
+                    // Write data to the server
+                    using var dataTable = new DataTable();
+                    dataTable.Columns.Add("WorkItemId", typeof(int));
+                    dataTable.Columns.Add("Tag", typeof(string));
+
+                    foreach (var item in data)
+                    {
+                        dataTable.Rows.Add(
+                            item.WorkItemId,
+                            item.Tag
+                        );
+                    }
+
+                    bulkCopy.WriteToServer(dataTable);
+                }
+
+                var mergeQuery = @"
+                            MERGE INTO WorkItemTags AS target
+                            USING (
+                                SELECT T.WorkItemId, T.Tag
+                                FROM #WorkItemTags T
+                            ) AS source
+                            ON target.WorkItemId = source.WorkItemId AND target.Tag = source.Tag                           
+                            WHEN NOT MATCHED THEN
+                                INSERT (WorkItemId, Tag)
+                                VALUES (source.WorkItemId, source.Tag);";
+
+                connection.Execute(mergeQuery);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
 
         internal static void AddAreas(List<Area> data)
         {
@@ -346,7 +397,7 @@ namespace ADOExport.Data
 
             try
             {
-                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), AreaAdoId int, IsCompliance bit);";
+                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), AreaAdoId int, ParentType varchar(50));";
                 connection.Execute(sql);
 
                 using (var bulkCopy = new SqlBulkCopy(connection))
@@ -362,7 +413,7 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("WorkItemType", typeof(string));
                     dataTable.Columns.Add("Estimate", typeof(decimal));
                     dataTable.Columns.Add("AreaAdoId", typeof(int));
-                    dataTable.Columns.Add("IsCompliance", typeof(bool));
+                    dataTable.Columns.Add("ParentType", typeof(string));
 
                     foreach (var item in data)
                     {
@@ -374,7 +425,7 @@ namespace ADOExport.Data
                             item.WorkItemType,
                             item.Estimate,
                             item.AreaAdoId,
-                            item.IsCompliance
+                            item.ParentType
                         );
                     }
 
@@ -383,7 +434,7 @@ namespace ADOExport.Data
 
                 var mergeQuery = @"
                             MERGE INTO WorkItems AS target
-                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, IsCompliance FROM #WorkItems) AS source
+                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, ParentType FROM #WorkItems) AS source
                             ON target.WorkItemId = source.WorkItemId
                             WHEN MATCHED THEN
                                 UPDATE SET
@@ -393,10 +444,10 @@ namespace ADOExport.Data
                                     target.WorkItemType = source.WorkItemType,
                                     target.Estimate = source.Estimate,
                                     target.AreaAdoId = source.AreaAdoId,
-                                    target.IsCompliance = source.IsCompliance
+                                    target.ParentType = source.ParentType
                             WHEN NOT MATCHED THEN
-                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, IsCompliance)
-                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.AreaAdoId, source.IsCompliance);";
+                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, ParentType)
+                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.AreaAdoId, source.ParentType);";
                 
                 connection.Execute(mergeQuery);               
             }

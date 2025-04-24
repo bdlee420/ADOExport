@@ -62,7 +62,7 @@ namespace ADOExport.Services
                                     AND [System.State] IN ('Done', 'Closed', 'Removed') 
                                     AND [System.Id] IN ({string.Join(",", ids)}) 
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'
-                                    ASOF '{asOf}'";               
+                                    ASOF '{asOf}'";
 
                 var queryRequest = new QueryRequest
                 {
@@ -150,7 +150,7 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<WorkItemChildren>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
+        internal static async Task<Dictionary<string, List<WorkItemChildren>>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
         {
             try
             {
@@ -160,20 +160,68 @@ namespace ADOExport.Services
                 if (SettingsService.CurrentInputs is null)
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
+                var workitemsByTag = new Dictionary<string, List<WorkItemChildren>>();
+                foreach (var tag in tags)
+                {
+                    var workitems = new List<WorkItemChildren>();
+                    foreach (var iteration in iterations)
+                    {
+                        string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
+
+                        query += $" AND [Source].[System.Tags] CONTAINS '{tag}' ";
+                        query += $" AND ( [Source].[System.WorkItemType] = 'Epic' OR [Source].[System.WorkItemType] = 'Feature' OR [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
+                        query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
+                        var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
+                        query += $" AND ( {string.Join(" OR ", conditions)} ) ";
+                        query += $" AND [Target].[System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' ";
+                        query += $")";
+                        query += " AND ([System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward') ";
+                        query += " ORDER BY [System.Id] MODE (Recursive)";
+
+                        var queryRequest = new QueryRequest
+                        {
+                            Query = query
+                        };
+
+                        var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryChildrenResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                        workitems.AddRange(queryResponse.WorkItemRelations);
+                    }
+                    workitemsByTag[tag] = workitems;
+                }
+
+                return workitemsByTag;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItemChildren>> GetWorkItemIds(IEnumerable<Team> teams, List<IterationDto> iterations, string parentType)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitemsByTag = new Dictionary<string, List<WorkItemChildren>>();
                 var workitems = new List<WorkItemChildren>();
                 foreach (var iteration in iterations)
                 {
                     string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
 
-                    var conditions_tags = tags.Select(tag => $"[Source].[System.Tags] CONTAINS '{tag}'");
-                    query += $" AND ( {string.Join(" OR ", conditions_tags)} ) ";
-                    query += $" AND ( [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
-                    query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
+                    query += $" AND ( [Source].[System.WorkItemType] = '{parentType}'))";
+                    query += $" AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') ";
+                    query += $" AND ( [Target].[System.WorkItemType] = 'Task' OR [Target].[System.WorkItemType] = 'Defect'  OR [Target].[System.WorkItemType] = 'Deployment') ";
                     var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" AND ( {string.Join(" OR ", conditions)} ) ";
                     query += $" AND [Target].[System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' ";
-                    query += $") ORDER BY [System.Id] MODE (MustContain)";
-
+                    query += $")";
+                    query += " ORDER BY [System.Id] MODE (MustContain)";
 
                     var queryRequest = new QueryRequest
                     {
@@ -183,6 +231,7 @@ namespace ADOExport.Services
                     var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryChildrenResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
                     workitems.AddRange(queryResponse.WorkItemRelations);
                 }
+
                 return workitems;
             }
             catch (Exception ex)
@@ -217,47 +266,6 @@ namespace ADOExport.Services
                 }
 
                 return workItemDetails;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                throw;
-            }
-        }
-
-        internal static async Task<List<CapacityResult>> GetCapacities(List<IterationDto> iterations, IEnumerable<Team> teams)
-        {
-            try
-            {
-                if (SettingsService.CurrentSettings is null)
-                    throw new NullReferenceException("SettingsService.CurrentSettings");
-
-                var capacityResults = new List<CapacityResult>();
-                foreach (var iteration in iterations)
-                {
-                    foreach (var team in teams)
-                    {
-                        try
-                        {
-                            var capacityResponse = await WebClientHelper.GetAsync<CapacityResponse>($"{SettingsService.CurrentSettings.ProjectId}/{team.Id}/_apis/work/teamsettings/iterations/{iteration.Identifier}/capacities", SettingsService.CurrentSettings.PersonalAccessToken);
-                            var capacityResult = new CapacityResult
-                            {
-                                Iteration = iteration,
-                                Team = team,
-                                TeamMembers = capacityResponse.TeamMembers
-                            };
-                            capacityResults.Add(capacityResult);
-                        }
-                        catch (HttpRequestException ex)
-                        {
-                            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound)
-                            {
-                                throw;
-                            }
-                        }
-                    }
-                }
-                return capacityResults;
             }
             catch (Exception ex)
             {
@@ -342,6 +350,82 @@ namespace ADOExport.Services
                 var iterations = iterationResponse.DataProviders.DataProviderMeta.PreviousIterations;
                 iterations.Add(iterationResponse.DataProviders.DataProviderMeta.CurrentIteration);
                 return iterations;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<CapacityResult>> GetCapacities2(List<IterationDto> iterations, IEnumerable<Team> teams)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var capacityResults = new List<CapacityResult>();
+                foreach (var iteration in iterations)
+                {
+                    foreach (var team in teams)
+                    {
+                        try
+                        {
+                            var capacityRequest = new IterationRequest
+                            {
+                                ContributionIds =
+                             [
+                                 "ms.vss-work-web.sprints-hub-capacity-data-provider"
+                             ],
+                                DataProviderContext = new DataProviderContext
+                                {
+                                    Properties = new DataProviderContextProperties
+                                    {
+                                        SourcePage = new SourcePage
+                                        {
+                                            RouteId = "ms.vss-work-web.new-sprints-content-route",
+                                            RouteValues = new RouteValues
+                                            {
+                                                Project = SettingsService.CurrentSettings.ProjectName,
+                                                Pivot = "capacity",
+                                                TeamName = team.Name,
+                                                Viewname = "content",
+                                                Iteration = $"{SettingsService.CurrentSettings.ProjectName}/Current/Feature Release/{iteration.Name}"
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                            var url = "_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1";
+                            var capacityResponse = await WebClientHelper.PostAsync<IterationRequest, CapacityResponse>(url, capacityRequest, SettingsService.CurrentSettings.AuthToken);
+
+                            var capacityResult = new CapacityResult
+                            {
+                                Team = team,
+                                Iteration = iteration,
+                                TeamMembers = []
+                            };
+
+                            capacityResult.TeamMembers = capacityResponse.DataProviders.DataProviderMeta.UserCapacities.Select(c => new TeamMemberCapacity
+                            {
+                                TeamMember = c.TeamMember,
+                                Activities = c.Activities,
+                                DaysOff = c.DaysOff
+                            }).ToList();
+
+                            capacityResults.Add(capacityResult);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+                }
+                return capacityResults;
             }
             catch (Exception ex)
             {

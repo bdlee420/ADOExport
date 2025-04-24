@@ -57,7 +57,8 @@ CREATE TABLE DevCapacity (
     IterationAdoId int,
 	IterationAdoIdentifier VARCHAR(255),
 	TeamAdoId VARCHAR(255),
-	Days int
+	Days int,
+	IsDev bit
 )
 
 CREATE UNIQUE INDEX IX_Unique_DevCapacity

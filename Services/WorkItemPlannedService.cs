@@ -1,4 +1,5 @@
 ﻿using ADOExport.Models;
+using Microsoft.VisualStudio.Services.Common;
 
 namespace ADOExport.Services
 {
@@ -8,48 +9,52 @@ namespace ADOExport.Services
         {
             var all_work_items = new List<WorkItemDetails>();
 
-            var completion_data_start = new List<CompletionDataKey>();
-            var completion_data_end = new List<CompletionDataKey>();
-            var completion_data_end_deleted = new List<CompletionDataKey>();
+            //var completion_data_end = new List<CompletionDataKey>();
+            var all_done_workitems_end = new HashSet<CompletionDataKey>();
 
-            var completion_data_start_hash = new HashSet<CompletionDataKey>();
-            var completion_data_end_hash = new HashSet<CompletionDataKey>();
-            var completion_data_end_deleted_hash = new HashSet<CompletionDataKey>();
+            //var completion_data_end_deleted = new List<CompletionDataKey>();
+            var all_deleted_workitems_end = new HashSet<CompletionDataKey>();
 
-            var all_ids = new List<int>();
-            var ids_exists_at_end = new List<int>();
+            var all_unplanned_workitems = new HashSet<CompletionDataKey>();
 
             foreach (var iteration in iterationsDto)
             {
+                //Setup Snapshot Dates
                 var start_date = iteration.StartDate.AddDays(-1);
-                var result_start = await ADOService.GetWorkItemIdsAsOf_Start(start_date, iteration, selectedTeams);
-                var start_ids = result_start.Select(s => s.Id).ToList();
-                if (start_ids.Count == 0)
-                    continue;
-
                 var end_date = iteration.EndDate.AddDays(4);
 
-                all_ids.AddRange(start_ids);
-                var result_end = await ADOService.GetWorkItemIdsAsOf_End(end_date, start_ids, iteration);
-                var result_end_no_filter = await ADOService.GetWorkItemIdsAsOf_End_NoFilter(end_date, start_ids, iteration);
+                var planned_workitems_start = await ADOService.GetNotDoneWorkItemIdsAsOf_Start(start_date, iteration, selectedTeams);
+                var planned_workitems_ids = planned_workitems_start.Select(s => s.Id).ToHashSet();
 
-                var ids_not_deleted = result_end_no_filter.Select(r => r.Id).ToList();
-                var ids_deleted = start_ids.Except(ids_not_deleted).ToHashSet();
-                var work_items_deleted = result_start.Where(r => ids_deleted.Contains(r.Id));
+                var iteration_done_workitems_end = await ADOService.GetDoneWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
+                var iteration_all_workitems_end = await ADOService.GetAllWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
 
-                completion_data_start.AddRange(result_start.Select(r => new CompletionDataKey
+                //Get rid of WorkItems that were done before the Current Sprint but for some reason still in the Current Sprint
+                var done_workitems_ids = iteration_done_workitems_end.Select(w => w.Id);
+                var iteration_done_workitems_start = await ADOService.GetDoneWorkItemIdsAsOf_Start(start_date, iteration, done_workitems_ids);
+                var ids_to_remove = iteration_done_workitems_start.Select(w => w.Id);                
+                iteration_all_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
+                iteration_done_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
+
+                var ids_not_deleted = iteration_all_workitems_end.Select(r => r.Id).ToList();
+                var ids_deleted = planned_workitems_ids.Except(ids_not_deleted).ToHashSet();
+                var iteration_deleted_workitems_end = planned_workitems_start.Where(r => ids_deleted.Contains(r.Id));
+
+                all_unplanned_workitems.AddRange(iteration_all_workitems_end
+                    .Where(r => !planned_workitems_ids.Contains(r.Id))
+                    .Select(r => new CompletionDataKey
+                    {
+                        IterationAdoId = iteration.Id,
+                        WorkItemId = r.Id
+                    }));
+
+                all_done_workitems_end.AddRange(iteration_done_workitems_end.Select(r => new CompletionDataKey
                 {
                     IterationAdoId = iteration.Id,
                     WorkItemId = r.Id
                 }));
 
-                completion_data_end.AddRange(result_end.Select(r => new CompletionDataKey
-                {
-                    IterationAdoId = iteration.Id,
-                    WorkItemId = r.Id
-                }));
-
-                completion_data_end_deleted.AddRange(work_items_deleted.Select(r => new CompletionDataKey
+                all_deleted_workitems_end.AddRange(iteration_deleted_workitems_end.Select(r => new CompletionDataKey
                 {
                     IterationAdoId = iteration.Id,
                     WorkItemId = r.Id
@@ -59,9 +64,6 @@ namespace ADOExport.Services
                 all_work_items.AddRange(await ADOService.GetWorkItemDetails(ids_not_deleted, end_date));
                 all_work_items.AddRange(await ADOService.GetWorkItemDetails(ids_deleted.ToList(), start_date));
             }
-
-            completion_data_end_deleted_hash = completion_data_end_deleted.ToHashSet();
-            completion_data_end_hash = completion_data_end.ToHashSet();
 
             var workItemPlannedData = all_work_items.Select(w =>
             {
@@ -77,21 +79,13 @@ namespace ADOExport.Services
                     EmployeeAdoId = w.Fields.AssignedTo?.Id,
                     AreaAdoId = w.Fields.AreaId,
                     IterationId = w.Fields.IterationId,
-                    IsDeleted = completion_data_end_deleted_hash.Contains(key),
-                    IsDone = completion_data_end_hash.Contains(key)
+                    IsDeleted = all_deleted_workitems_end.Contains(key),
+                    IsPlanned = !all_unplanned_workitems.Contains(key),
+                    IsDone = all_done_workitems_end.Contains(key)
                 };
 
                 return data;
             }).ToList();
-
-            //completion_data_end_deleted.Select(w => new WorkItemPlannedData
-            //{
-            //    AreaAdoId = 0,
-            //    IsDeleted = true,
-            //    IsDone = false,
-            //    IterationId = w.IterationAdoId,
-            //    WorkItemId = w.WorkItemId
-            //});
 
             Console.WriteLine($"Get WorkItemPlannedData Count = {workItemPlannedData.Count}");
 

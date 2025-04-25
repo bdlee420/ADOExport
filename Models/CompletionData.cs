@@ -7,6 +7,7 @@
         internal int IterationId { get; set; }
         internal int AreaAdoId { get; set; }
         internal bool IsDone { get; set; }
+        internal bool IsPlanned { get; set; }
         internal bool IsDeleted { get; set; }
 
         public override string? ToString()

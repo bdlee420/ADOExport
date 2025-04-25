@@ -5,7 +5,7 @@ namespace ADOExport.Services
 {
     internal class ADOService
     {
-        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_Start(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
+        internal static async Task<List<WorkItem>> GetNotDoneWorkItemIdsAsOf_Start(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace ADOExport.Services
                     Query = query
                 };
 
-                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=10000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
                 workitems.AddRange(queryResponse.WorkItems);
 
                 return workitems;
@@ -46,7 +46,7 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_End(DateTime asOf, List<int> ids, IterationDto iteration)
+        internal static async Task<List<WorkItem>> GetDoneWorkItemIdsAsOf_End(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
         {
             try
             {
@@ -57,19 +57,22 @@ namespace ADOExport.Services
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
                 var workitems = new List<WorkItem>();
-
+                //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
-                                    AND [System.State] IN ('Done', 'Closed', 'Removed') 
-                                    AND [System.Id] IN ({string.Join(",", ids)}) 
-                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'
-                                    ASOF '{asOf}'";
+                                    AND [System.State] IN ('Done', 'Closed', 'Removed')                                     
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
+
+                var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
+                query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
+
+                query += $" ASOF '{asOf}' ";
 
                 var queryRequest = new QueryRequest
                 {
                     Query = query
                 };
 
-                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=10000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
                 workitems.AddRange(queryResponse.WorkItems);
 
                 return workitems;
@@ -81,7 +84,7 @@ namespace ADOExport.Services
             }
         }
 
-        internal static async Task<List<WorkItem>> GetWorkItemIdsAsOf_End_NoFilter(DateTime asOf, List<int> ids, IterationDto iteration)
+        internal static async Task<List<WorkItem>> GetDoneWorkItemIdsAsOf_Start(DateTime asOf, IterationDto iteration, IEnumerable<int> ids)
         {
             try
             {
@@ -92,11 +95,50 @@ namespace ADOExport.Services
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
                 var workitems = new List<WorkItem>();
-
+                //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
-                                    AND [System.Id] IN ({string.Join(",", ids)}) 
-                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'
-                                    ASOF '{asOf}'";
+                                    AND [System.State] IN ('Done', 'Closed', 'Removed')                                     
+                                    AND [System.Id] IN ({string.Join(",", ids)})  
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
+
+                query += $" ASOF '{asOf}' ";
+
+                var queryRequest = new QueryRequest
+                {
+                    Query = query
+                };
+
+                var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=10000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                workitems.AddRange(queryResponse.WorkItems);
+
+                return workitems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        internal static async Task<List<WorkItem>> GetAllWorkItemIdsAsOf_End(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitems = new List<WorkItem>();
+                //AND [System.Id] IN ({string.Join(",", ids)}) 
+                string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
+                                    AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
+
+                var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
+                query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
+
+                query += $" ASOF '{asOf}' ";
 
                 var queryRequest = new QueryRequest
                 {

@@ -8,20 +8,17 @@ namespace ADOExport.Services
         internal async static Task<List<WorkItemPlannedData>> GetWorkItemPlannedData(IEnumerable<Team> selectedTeams, List<IterationDto> iterationsDto)
         {
             var all_work_items = new List<WorkItemDetails>();
-
-            //var completion_data_end = new List<CompletionDataKey>();
             var all_done_workitems_end = new HashSet<CompletionDataKey>();
-
-            //var completion_data_end_deleted = new List<CompletionDataKey>();
             var all_deleted_workitems_end = new HashSet<CompletionDataKey>();
-
             var all_unplanned_workitems = new HashSet<CompletionDataKey>();
 
             foreach (var iteration in iterationsDto)
             {
                 //Setup Snapshot Dates
-                var start_date = iteration.StartDate.AddDays(-1);
-                var end_date = iteration.EndDate.AddDays(4);
+
+                var is_3_week_sprint = iteration.StartDate < new DateTime(2025, 4, 20);
+                var start_date = is_3_week_sprint ? iteration.StartDate.AddDays(-1) : iteration.StartDate;
+                var end_date = is_3_week_sprint ? iteration.EndDate.AddDays(4) : iteration.EndDate.AddDays(1);
 
                 var planned_workitems_start = await ADOService.GetNotDoneWorkItemIdsAsOf_Start(start_date, iteration, selectedTeams);
                 var planned_workitems_ids = planned_workitems_start.Select(s => s.Id).ToHashSet();

@@ -38,6 +38,7 @@ namespace ADOExport
             bool runAreas = SettingsService.CurrentInputs.RunSettings.LoadAreas;
             bool runCapacities = SettingsService.CurrentInputs.RunSettings.LoadCapacities;
             bool runTags = SettingsService.CurrentInputs.RunSettings.LoadTags;
+            bool runProjectTags = SettingsService.CurrentInputs.RunSettings.LoadProjectTags;
 
             bool runWorkItems = SettingsService.CurrentInputs.RunSettings.LoadWorkItems
                 || SettingsService.CurrentInputs.RunSettings.LoadEmployees
@@ -54,7 +55,8 @@ namespace ADOExport
                 || SettingsService.CurrentInputs.RunSettings.LoadCapacities
                 || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
                 || SettingsService.CurrentInputs.RunSettings.LoadEmployees
-                || SettingsService.CurrentInputs.RunSettings.LoadTags;
+                || SettingsService.CurrentInputs.RunSettings.LoadTags
+                || SettingsService.CurrentInputs.RunSettings.LoadProjectTags;
 
             if (runIterations)
             {
@@ -76,6 +78,16 @@ namespace ADOExport
             {
                 var capacitiesDto = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Capacities", () => CapacitiesService.GetCapacitiesAsync(selected_teams_employee_reporting, iterationsDto));
                 ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Capacities", () => SqlDataProvider.AddCapacities(capacitiesDto));
+            }
+
+            if (runProjectTags)
+            {
+                var projectResults = await ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Project Tagged WorkItems", () => WorkItemService.GetProjectWorkItemsAsync(selected_teams_tags, SettingsService.CurrentInputs.ProjectTags));
+                if (projectResults.WorkItemDetailsDtos != null && projectResults.WorkItemTags != null)
+                {
+                    ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Project Tagged WorkItems", () => SqlDataProvider.AddUpdateWorkItems(projectResults.WorkItemDetailsDtos));
+                    ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Project Tags", () => SqlDataProvider.AddWorkItemTags(projectResults.WorkItemTags));
+                }
             }
 
             if (runWorkItems)

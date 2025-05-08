@@ -240,6 +240,50 @@ namespace ADOExport.Services
             }
         }
 
+        internal static async Task<Dictionary<string, List<WorkItemChildren>>> GetWorkItemIdsByTag(IEnumerable<Team> teams, List<string> tags)
+        {
+            try
+            {
+                if (SettingsService.CurrentSettings is null)
+                    throw new NullReferenceException("SettingsService.CurrentSettings");
+
+                if (SettingsService.CurrentInputs is null)
+                    throw new NullReferenceException("SettingsService.CurrentInputs");
+
+                var workitemsByTag = new Dictionary<string, List<WorkItemChildren>>();
+                foreach (var tag in tags)
+                {
+                    var workitems = new List<WorkItemChildren>();
+                    string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
+
+                    query += $" AND [Source].[System.Tags] CONTAINS '{tag}' ";
+                    query += $" AND ( [Source].[System.WorkItemType] = 'Epic' OR [Source].[System.WorkItemType] = 'Feature' OR [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
+                    query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] NOT IN ('Removed', 'Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
+                    var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
+                    query += $" AND ( {string.Join(" OR ", conditions)} ) ";
+                    query += $")";
+                    query += " AND ([System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward') ";
+                    query += " ORDER BY [System.Id] MODE (Recursive)";
+
+                    var queryRequest = new QueryRequest
+                    {
+                        Query = query
+                    };
+
+                    var queryResponse = await WebClientHelper.PostAsync<QueryRequest, QueryChildrenResponse>($"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/wiql?$top=1000&api-version=7.1", queryRequest, SettingsService.CurrentSettings.PersonalAccessToken);
+                    workitems.AddRange(queryResponse.WorkItemRelations);
+                    workitemsByTag[tag] = workitems;
+                }
+
+                return workitemsByTag;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
         internal static async Task<List<WorkItemChildren>> GetWorkItemIds(IEnumerable<Team> teams, List<IterationDto> iterations, string parentType)
         {
             try
@@ -300,7 +344,7 @@ namespace ADOExport.Services
 
                     var asOfFilter = asOf.HasValue ? $"asOf={asOf.Value}&" : string.Empty;
 
-                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,System.IterationId,System.AreaPath,System.AreaId&{asOfFilter}api-version=7.1";
+                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,Microsoft.VSTS.Scheduling.RemainingWork,Microsoft.VSTS.Common.Activity,System.IterationId,System.AreaPath,System.AreaId&{asOfFilter}api-version=7.1";
 
                     var queryResponse = await WebClientHelper.GetAsync<WorkItemReponse>(url, SettingsService.CurrentSettings.PersonalAccessToken);
 

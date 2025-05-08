@@ -30,11 +30,46 @@ namespace ADOExport.Services
                     IterationId = w.Fields.IterationId,
                     AreaAdoId = w.Fields.AreaId,
                     WorkItemType = w.Fields.WorkItemType,
+                    IsDone = true,
+                    Activity = w.Fields.Activity,
                     ParentType = GetParentType(w.Id, bugs, userStories, deployments)
-                    //IsCompliance = taggedIds.Contains(w.Id)
                 }).ToList();
 
             Console.WriteLine($"Get WorkItems Count = {workItemDetailsDto.Count}");
+
+            return new WorkItemsResult
+            {
+                WorkItemDetails = workItemDetails,
+                WorkItemDetailsDtos = workItemDetailsDto,
+                WorkItemTags = workItemTags
+            };
+        }
+
+        internal async static Task<WorkItemsResult> GetProjectWorkItemsAsync(IEnumerable<Team> teams, List<string> tags)
+        {
+            //Get all Task Ids that are tagged
+            var workItemTags = await GetTaggedIdsAsync(teams, tags);
+            var workItemIds = workItemTags.Select(w => w.WorkItemId).ToList();
+            var workItemDetails = await ADOService.GetWorkItemDetails(workItemIds);
+
+            var workItemDetailsDto = workItemDetails
+                .Where(w => w.Fields.WorkItemType == "Task" || w.Fields.WorkItemType == "Defect")
+                .Select(w => new WorkItemDetailsDto
+                {
+                    WorkItemId = w.Id,
+                    EmployeeAdoId = w.Fields.AssignedTo?.Id ?? "-1",
+                    Estimate = w.Fields.OriginalEstimate,
+                    Remaining = w.Fields.Remaining,
+                    IterationPath = w.Fields.IterationPath,
+                    IterationId = w.Fields.IterationId,
+                    AreaAdoId = w.Fields.AreaId,
+                    WorkItemType = w.Fields.WorkItemType,
+                    IsDone = false,
+                    Activity = w.Fields.Activity
+                    //ParentType = GetParentType(w.Id, bugs, userStories, deployments)
+                }).ToList();
+
+            Console.WriteLine($"Get Project Workitem Tagged Count = {workItemDetailsDto.Count}");
 
             return new WorkItemsResult
             {
@@ -66,6 +101,26 @@ namespace ADOExport.Services
 
             //Get all Task Ids that are tagged
             var workItemsTagged = await ADOService.GetWorkItemIdsByTag(teams, iterations, tags);
+
+            foreach (var value in workItemsTagged)
+            {
+                foreach (var workItemId in value.Value
+                    .Where(w => w.Rel == "System.LinkTypes.Hierarchy-Forward" && w.Target != null && w.Target.Id > 0)
+                    .Select(w => w.Target.Id))
+                {
+                    workItemTags.Add(new WorkItemTag { Tag = value.Key, WorkItemId = workItemId });
+                }
+            }
+
+            return workItemTags;
+        }
+
+        private async static Task<List<WorkItemTag>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<string> tags)
+        {
+            var workItemTags = new List<WorkItemTag>();
+
+            //Get all Task Ids that are tagged
+            var workItemsTagged = await ADOService.GetWorkItemIdsByTag(teams, tags);
 
             foreach (var value in workItemsTagged)
             {

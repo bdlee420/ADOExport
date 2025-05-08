@@ -5,6 +5,7 @@ CREATE TABLE WorkItemsPlannedDone (
 	IterationId int,
 	AreaAdoId int,
 	IsDone bit,
+	IsPlanned bit,
 	IsDeleted bit
 )
 
@@ -34,6 +35,14 @@ CREATE TABLE Employees (
 	Rating tinyint
 )
 
+DROP TABLE IF EXISTS WorkItemTags
+
+CREATE TABLE WorkItemTags (
+	WorkItemId int NOT NULL,
+    Tag VARCHAR(255)
+)
+
+
 DROP TABLE IF EXISTS WorkItems
 
 CREATE TABLE WorkItems (
@@ -43,8 +52,11 @@ CREATE TABLE WorkItems (
 	IterationId int,
     WorkItemType VARCHAR(20),
     Estimate DECIMAL(28,12),
+	Remaining DECIMAL(28,12),
     AreaAdoId int,
-	IsCompliance bit
+	ParentType VARCHAR(50),
+	IsDone bit,
+	Activity varchar(50)
 )
 
 CREATE UNIQUE INDEX IX_Unique_WorkItemId
@@ -76,4 +88,16 @@ CREATE TABLE Iterations (
 	StartDate datetime,
 	EndDate datetime,
 	YearQuarter VARCHAR(255)
+)
+
+DROP TABLE IF EXISTS Projects
+
+CREATE TABLE Projects
+(
+	Timestamp datetime, 
+	Tag varchar(200), 
+	Capacity decimal(4,2), 
+	Remaining decimal(4,2), 
+	StartDate datetime, 
+	TargetDate datetime
 )

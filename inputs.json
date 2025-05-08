@@ -9,11 +9,12 @@
     "loadIterations": true
   },
   "tags": [],
+  "project_tags": [],
   "teams": [
     {
       "teamName": "My Team A",
       "reportIds": [ 1, 2, 3 ]
-    }    
+    }
   ],
   "teamsOverrides": [
     {
@@ -23,7 +24,7 @@
     {
       "teamName": "My Team B",
       "reportIds": [ 1, 2, 3 ]
-    }  
+    }
   ],
   "iterations": [
     "25-05"

@@ -10,6 +10,9 @@ namespace ADOExport.Models
         [JsonProperty("tags")]
         internal required List<string> Tags { get; set; }
 
+        [JsonProperty("project_tags")]
+        internal required List<string> ProjectTags { get; set; }
+
         [JsonProperty("teams")]
         internal required List<TeamOverrides> Teams { get; set; }
 
@@ -51,6 +54,9 @@ namespace ADOExport.Models
 
         [JsonProperty("loadTags")]
         public required bool LoadTags { get; set; }
+
+        [JsonProperty("loadProjectTags")]
+        public required bool LoadProjectTags { get; set; }
     }
 
     internal class TeamOverrides

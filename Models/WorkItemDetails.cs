@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.TeamFoundation.WorkItemTracking.Process.WebApi.Models.Process;
+using Newtonsoft.Json;
 
 namespace ADOExport.Models
 {
@@ -25,6 +26,10 @@ namespace ADOExport.Models
         [JsonProperty("fields")]
         internal required WorkItemDetailFields Fields { get; set; }
 
+        public override string? ToString()
+        {
+            return $"{Fields.WorkItemType}-{Id}-{Fields.AreaPath}";
+        }
     }
     internal class WorkItemDetailFields
     {
@@ -48,6 +53,12 @@ namespace ADOExport.Models
 
         [JsonProperty("Microsoft.VSTS.Scheduling.OriginalEstimate")]
         internal decimal OriginalEstimate { get; set; }
+
+        [JsonProperty("Microsoft.VSTS.Scheduling.RemainingWork")]
+        internal decimal Remaining { get; set; }
+
+        [JsonProperty("Microsoft.VSTS.Common.Activity")]
+        internal string Activity { get; set; }
     }
 
     internal class WorkItemDetailsDto
@@ -66,7 +77,18 @@ namespace ADOExport.Models
 
         internal decimal Estimate { get; set; }
 
+        internal decimal Remaining { get; set; }
+
         internal string ParentType { get; set; }
+
+        internal bool IsDone { get;set; }
+
+        internal string Activity { get; set; }
+
+        public override string? ToString()
+        {
+            return $"{WorkItemType}-{WorkItemId}-{IterationPath}";
+        }
     }
 
 }

@@ -398,7 +398,7 @@ namespace ADOExport.Data
 
             try
             {
-                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), AreaAdoId int, ParentType varchar(50));";
+                var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), Remaining DECIMAL(28,12), AreaAdoId int, ParentType varchar(50), IsDone bit, Activity varchar(50));";
                 connection.Execute(sql);
 
                 using (var bulkCopy = new SqlBulkCopy(connection))
@@ -413,8 +413,11 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("IterationId", typeof(int));
                     dataTable.Columns.Add("WorkItemType", typeof(string));
                     dataTable.Columns.Add("Estimate", typeof(decimal));
+                    dataTable.Columns.Add("Remaining", typeof(decimal));
                     dataTable.Columns.Add("AreaAdoId", typeof(int));
                     dataTable.Columns.Add("ParentType", typeof(string));
+                    dataTable.Columns.Add("IsDone", typeof(bool));
+                    dataTable.Columns.Add("Activity", typeof(string));
 
                     foreach (var item in data)
                     {
@@ -425,8 +428,11 @@ namespace ADOExport.Data
                             item.IterationId,
                             item.WorkItemType,
                             item.Estimate,
+                            item.Remaining,
                             item.AreaAdoId,
-                            item.ParentType
+                            item.ParentType,
+                            item.IsDone,
+                            item.Activity
                         );
                     }
 
@@ -435,7 +441,7 @@ namespace ADOExport.Data
 
                 var mergeQuery = @"
                             MERGE INTO WorkItems AS target
-                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, ParentType FROM #WorkItems) AS source
+                            USING (SELECT WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, Remaining, AreaAdoId, ParentType, IsDone, Activity FROM #WorkItems) AS source
                             ON target.WorkItemId = source.WorkItemId
                             WHEN MATCHED THEN
                                 UPDATE SET
@@ -445,10 +451,13 @@ namespace ADOExport.Data
                                     target.WorkItemType = source.WorkItemType,
                                     target.Estimate = source.Estimate,
                                     target.AreaAdoId = source.AreaAdoId,
-                                    target.ParentType = source.ParentType
+                                    target.ParentType = source.ParentType,
+                                    target.Remaining = source.Remaining,
+                                    target.IsDone = source.IsDone,
+                                    target.Activity = source.Activity
                             WHEN NOT MATCHED THEN
-                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, AreaAdoId, ParentType)
-                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.AreaAdoId, source.ParentType);";
+                                INSERT (WorkItemId, EmployeeAdoId, IterationPath, IterationId, WorkItemType, Estimate, Remaining, AreaAdoId, ParentType, IsDone, Activity)
+                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationPath, source.IterationId, source.WorkItemType, source.Estimate, source.Remaining, source.AreaAdoId, source.ParentType, source.IsDone, source.Activity);";
                 
                 connection.Execute(mergeQuery);               
             }

@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /appsettings.override.json
 /inputs.override.json
+Reporting-Projects.sql

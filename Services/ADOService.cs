@@ -254,10 +254,18 @@ namespace ADOExport.Services
                 foreach (var tag in tags)
                 {
                     var workitems = new List<WorkItemChildren>();
-                    string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' ";
+                    string query = $"SELECT [System.Id] FROM workitemLinks WHERE ([Source].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND (";
 
-                    query += $" AND [Source].[System.Tags] CONTAINS '{tag}' ";
-                    query += $" AND ( [Source].[System.WorkItemType] = 'Epic' OR [Source].[System.WorkItemType] = 'Feature' OR [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
+                    bool isFirst = true;
+                    foreach (var tag_part in tag.Split("|"))
+                    {
+                        if (!isFirst)
+                            query += $" AND ";                            
+                        isFirst = false;
+                        query += $" [Source].[System.Tags] CONTAINS '{tag_part}' ";
+                    }
+
+                    query += $") AND ( [Source].[System.WorkItemType] = 'Epic' OR [Source].[System.WorkItemType] = 'Feature' OR [Source].[System.WorkItemType] = 'User Story' OR [Source].[System.WorkItemType] = 'Bug' OR [Source].[System.WorkItemType] = 'Deployment' ))";
                     query += $"AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] NOT IN ('Removed', 'Done', 'Closed') AND [Target].[System.WorkItemType] = 'Task' ";
                     var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" AND ( {string.Join(" OR ", conditions)} ) ";

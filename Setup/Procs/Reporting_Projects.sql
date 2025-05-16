@@ -1,4 +1,16 @@
-CREATE PROCEDURE [dbo].[Reporting_Projects]
+USE [EmployeeReportingV2]
+GO
+/****** Object:  StoredProcedure [dbo].[Reporting_Projects]    Script Date: 5/16/2025 8:21:05 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[Reporting_Projects]
 AS
 BEGIN
 	
@@ -18,19 +30,18 @@ BEGIN
 
 
 	select p.Tag, 
-	p.Capacity,
+	p.TotalCapacity,
+	p.DevDedication,
 	FORMAT(r.Remaining, 'N1') as Remaining, 
 	FORMAT(p.StartDate, 'MMMM dd yyyy') as StartDate, 
-	FORMAT(DATEADD(d, @Buffer*((r.Remaining/p.Capacity)/@DaysPerWeek*7) + p.QADays, p.StartDate), 'MMMM dd yyyy') as TargetDate
+	FORMAT(DATEADD(d, @Buffer*((r.Remaining/(p.TotalCapacity*p.DevDedication))/@DaysPerWeek*7) + p.QADays, p.StartDate), 'MMMM dd yyyy') as TargetDate
 	INTO #FinalResults
 	FROM #Projects p
 	JOIN #Remaining r on r.Tag = p.Tag
 
-	INSERT INTO Projects (TimeStamp, Tag, Capacity, Remaining, StartDate, TargetDate)
-	SELECT GetDate(), Tag, Capacity, Remaining, StartDate, TargetDate
+	INSERT INTO Projects (TimeStamp, Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate)
+	SELECT GetDate(), Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate
 	FROM #FinalResults
 
 	select * from #FinalResults
 END
-GO
-

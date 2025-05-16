@@ -96,7 +96,8 @@ CREATE TABLE Projects
 (
 	Timestamp datetime, 
 	Tag varchar(200), 
-	Capacity decimal(4,2), 
+	TotalCapacity decimal(4,2), 
+	DevDedication decimal(4,2), 
 	Remaining decimal(4,2), 
 	StartDate datetime, 
 	TargetDate datetime

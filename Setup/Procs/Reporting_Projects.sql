@@ -1,16 +1,4 @@
-USE [EmployeeReportingV2]
-GO
-/****** Object:  StoredProcedure [dbo].[Reporting_Projects]    Script Date: 5/16/2025 8:21:05 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
--- Author:		<Author,,Name>
--- Create date: <Create Date,,>
--- Description:	<Description,,>
--- =============================================
-ALTER PROCEDURE [dbo].[Reporting_Projects]
+CREATE PROCEDURE [dbo].[Reporting_Projects]
 AS
 BEGIN
 	
@@ -45,3 +33,4 @@ BEGIN
 
 	select * from #FinalResults
 END
+GO

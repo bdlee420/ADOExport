@@ -1,6 +1,7 @@
 ﻿CREATE PROCEDURE [dbo].[Reporting_Planned_Done]
 	@IterationNames varchar(1000) = null,
 	@IterationQuarters varchar(1000) = null,
+	@StartDate datetime = null,
 	@Teams varchar(2000) = null,
 	@Advanced bit = 1	
 AS
@@ -67,6 +68,13 @@ BEGIN
 			JOIN #IterationQuartersStrings ist on ist.value = i.YearQuarter
 		END	
 
+	IF @StartDate is not null
+		BEGIN	
+			INSERT INTO #Iterations (Id, Name, StartDate)
+			SELECT i.Id, 'Since ' + FORMAT(@StartDate, 'MMM dd, yyyy') as Name, @StartDate
+			FROM Iterations i
+			WHERE i.StartDate >= @StartDate
+		END	
 
 	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned
 	into #tmp
@@ -75,7 +83,7 @@ BEGIN
 
 	select 
 	t.Name as TeamName, 
-	i.name,
+	i.name as Iteration,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.IsPlanned = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
@@ -88,7 +96,20 @@ BEGIN
 	order by t.name, i.StartDate
 
 	select 
-	name as Iteration,
+	Iteration,
+	TeamName, 
+	StartDate,
+	sum(PlannedDone) as PlannedDone,
+	sum(PlannedTotal) as PlannedTotal,
+	sum(UnplannedDone) as UnplannedDone,
+	sum(TotalDone) as TotalDone
+	into #FinalResults1
+	from #results
+	group by Iteration, TeamName, StartDate
+	order by TeamName, StartDate
+
+	select 
+	Iteration,
 	TeamName, 
 	PlannedDone,
 	PlannedTotal,
@@ -103,7 +124,7 @@ BEGIN
 		ELSE (CAST(UnplannedDone AS DECIMAL(18, 2)) / CAST(TotalDone AS DECIMAL(18, 2))) * 100 
 	END as 'PercUnplanned'
 	into #FinalResults
-	from #results
+	from #FinalResults1
 	order by TeamName, StartDate
 
 	SELECT 
@@ -119,3 +140,5 @@ BEGIN
 	ORDER BY Iteration, PercDone desc
 END
 GO
+
+

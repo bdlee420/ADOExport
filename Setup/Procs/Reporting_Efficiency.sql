@@ -1,11 +1,13 @@
 CREATE PROCEDURE [dbo].[Reporting_Efficiency]
 	@IterationNames varchar(1000) = null,
 	@IterationQuarters varchar(1000) = null,
+	@StartDate datetime = null,
 	@Teams varchar(1000) = null,
 	@Advanced bit = 0
 AS
 BEGIN
-
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
     DROP TABLE IF EXISTS #Results
@@ -18,7 +20,7 @@ BEGIN
 	DROP TABLE IF EXISTS #Teams
 	DROP TABLE IF EXISTS #TeamsStrings
 
-	CREATE TABLE #Iterations (Name varchar(200))
+	CREATE TABLE #Iterations (Id int, Name varchar(200))
 	CREATE TABLE #Teams (Team varchar(200))	
 	
 	IF @IterationNames is not null
@@ -29,8 +31,8 @@ BEGIN
 			)
 			SELECT value INTO #IterationStrings FROM SplitStrings
 
-			INSERT INTO #Iterations (Name)
-			SELECT i.Name
+			INSERT INTO #Iterations (Id, Name)
+			SELECT i.Id, i.Name
 			FROM Iterations i
 			JOIN #IterationStrings ist on ist.value = i.Name
 		END	
@@ -43,10 +45,18 @@ BEGIN
 			)
 			SELECT value INTO #IterationQuartersStrings FROM SplitStrings
 
-			INSERT INTO #Iterations (Name)
-			SELECT i.YearQuarter as Name
+			INSERT INTO #Iterations (Id, Name)
+			SELECT i.Id, i.YearQuarter as Name
 			FROM Iterations i
 			JOIN #IterationQuartersStrings ist on ist.value = i.YearQuarter
+		END	
+
+	IF @StartDate is not null
+		BEGIN	
+			INSERT INTO #Iterations (Id, Name)
+			SELECT i.Id, 'Since ' + FORMAT(@StartDate, 'MMM dd, yyyy') as Name
+			FROM Iterations i
+			WHERE i.StartDate >= @StartDate
 		END	
 
 	IF @Teams is not null
@@ -73,7 +83,7 @@ BEGIN
 	into #EmployeeActivity
 	from DevCapacity dc
 	JOIN Iterations i on i.Id = dc.IterationAdoId
-	JOIN #Iterations i2 on i2.Name = i.Name OR i2.Name = i.YearQuarter
+	JOIN #Iterations i2 on i2.id = i.Id
 	order by EmployeeAdoId
 
 	select 
@@ -84,14 +94,14 @@ BEGIN
 	(select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Name = i.Name OR it.Name = i.YearQuarter
+	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 1
 	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as TotalDev,
 
 	(select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Name = i.Name OR it.Name = i.YearQuarter
+	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 0
 	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as TotalQA
 
@@ -107,7 +117,7 @@ BEGIN
 	join teams t on dc.TeamAdoId = t.id
 	JOIN #Teams t2 on t2.Team = t.Name
 	JOIN Iterations i on dc.IterationAdoId = i.Id 
-	JOIN #Iterations i2 on i2.Name = i.Name OR i2.Name = i.YearQuarter
+	JOIN #Iterations i2 on i2.Id = i.Id
 	WHERE dc.IsDev = 1
 	group by t.name, i2.Name
 
@@ -117,7 +127,7 @@ BEGIN
 	join teams t on dc.TeamAdoId = t.id
 	JOIN #Teams t2 on t2.Team = t.Name
 	JOIN Iterations i on dc.IterationAdoId = i.Id 
-	JOIN #Iterations i2 on i2.Name = i.Name OR i2.Name = i.YearQuarter
+	JOIN #Iterations i2 on i2.Id = i.Id
 	WHERE dc.IsDev = 0
 	group by t.name, i2.Name
 
@@ -140,6 +150,8 @@ BEGIN
 	ON tq.Name = r.name and tq.Iteration = r.Iteration
 	JOIN #TeamCapacityDev td
 	ON td.Name = r.name  and td.Iteration = r.Iteration
+	--ORDER BY TotalDev/td.Days desc
+	--ORDER BY IsCompliance / Total desc
 
 	if @Advanced = 1
 		select * from #FinalResults
@@ -148,5 +160,3 @@ BEGIN
 	FROM #FinalResults
 	ORDER BY iteration desc, Efficiency desc
 END
-GO
-

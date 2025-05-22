@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[Reporting_Planned_Done]
+﻿ALTER PROCEDURE [dbo].[Reporting_Planned_Done]
 	@IterationNames varchar(1000) = null,
 	@IterationQuarters varchar(1000) = null,
 	@StartDate datetime = null,
@@ -87,7 +87,7 @@ BEGIN
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as RemovedFromSprint,
 
 	i.StartDate

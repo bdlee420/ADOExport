@@ -3,6 +3,7 @@ using System.Text;
 using ADOExport.Models;
 using ADOExport.Services;
 using Newtonsoft.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ADOExport.Common
 {
@@ -23,7 +24,7 @@ namespace ADOExport.Common
         {
             if (SettingsService.CurrentSettings is null)
                 throw new NullReferenceException("SettingsService.CurrentSettings");
-            
+
             using HttpClient client = new();
             SetClientHeaders(client, token);
 
@@ -39,13 +40,21 @@ namespace ADOExport.Common
             }
             else if (string.IsNullOrEmpty(responseBody))
             {
-                Console.WriteLine($"Status Code: {response.StatusCode}");
-                throw new Exception("Failed");
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    throw new UnauthorizedAccessException("Unauthorized");
+                else
+                {
+                    Console.WriteLine($"Status Code: {response.StatusCode}");
+                    throw new Exception("Failed");
+                }
             }
             {
                 var error = JsonConvert.DeserializeObject<ErrorReponse>(responseBody) ?? throw new Exception("Shouldn't be null");
                 Console.WriteLine($"Status Code: {response.StatusCode}; Message: {error.Message}");
-                throw new Exception(error.Message);
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    throw new UnauthorizedAccessException("Unauthorized");
+                else
+                    throw new Exception(error.Message);
             }
         }
 

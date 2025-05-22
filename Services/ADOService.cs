@@ -260,7 +260,7 @@ namespace ADOExport.Services
                     foreach (var tag_part in tag.Split("|"))
                     {
                         if (!isFirst)
-                            query += $" AND ";                            
+                            query += $" AND ";
                         isFirst = false;
                         query += $" [Source].[System.Tags] CONTAINS '{tag_part}' ";
                     }
@@ -447,7 +447,15 @@ namespace ADOExport.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                var error = ex.ToString();
+                if (!error.Contains("Unauthorized"))
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Invalid authToken: Unable to load data from ADO. Will use existing iterations from database instead.");
+                }
                 throw;
             }
         }

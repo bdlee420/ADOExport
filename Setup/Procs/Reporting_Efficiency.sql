@@ -141,7 +141,8 @@ BEGIN
 	FORMAT(TotalQA, 'N2') as 'QA Total (days)',
 	FORMAT(TotalQA/tq.Days, 'N2') as 'QA Efficiency',
 
-	FORMAT(TotalDev+TotalQA, 'N2') as 'Total (days)',
+	FORMAT(tq.Days+td.Days, 'N2') as 'Total',
+	FORMAT(TotalDev+TotalQA, 'N2') as 'Velocity',
 	FORMAT((TotalDev+TotalQA)/(tq.Days+td.Days), 'N2') as 'Efficiency'
 
 	INTO #FinalResults
@@ -156,7 +157,7 @@ BEGIN
 	if @Advanced = 1
 		select * from #FinalResults
 
-	SELECT Iteration, Team, [Total (days)], Efficiency, [Dev Efficiency], [QA Efficiency]
+	SELECT Iteration, Team, Velocity, Total, Efficiency, [Dev Efficiency], [QA Efficiency]
 	FROM #FinalResults
 	ORDER BY iteration desc, Efficiency desc
 END

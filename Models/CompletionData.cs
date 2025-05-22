@@ -9,6 +9,7 @@
         internal bool IsDone { get; set; }
         internal bool IsPlanned { get; set; }
         internal bool IsDeleted { get; set; }
+        internal bool IsRemovedFromSprint { get; set; }
 
         public override string? ToString()
         {

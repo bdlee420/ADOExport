@@ -6,7 +6,8 @@ CREATE TABLE WorkItemsPlannedDone (
 	AreaAdoId int,
 	IsDone bit,
 	IsPlanned bit,
-	IsDeleted bit
+	IsDeleted bit,
+	IsRemovedFromSprint bit
 )
 
 drop table if exists Teams

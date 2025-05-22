@@ -95,7 +95,7 @@ namespace ADOExport.Services
                 .ToHashSet();
         }
 
-        private async static Task<List<WorkItemTag>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
+        public async static Task<List<WorkItemTag>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<IterationDto> iterations, List<string> tags)
         {
             var workItemTags = new List<WorkItemTag>();
 

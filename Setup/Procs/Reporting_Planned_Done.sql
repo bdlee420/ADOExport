@@ -76,7 +76,7 @@ BEGIN
 			WHERE i.StartDate >= @StartDate
 		END	
 
-	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned
+	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned, w.IsRemovedFromSprint
 	into #tmp
 	from WorkItemsPlannedDone w
 	join #iterations i on i.Id = w.IterationId
@@ -84,10 +84,12 @@ BEGIN
 	select 
 	t.Name as TeamName, 
 	i.name as Iteration,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.IsPlanned = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as RemovedFromSprint,
+
 	i.StartDate
 	into #results
 	from teams t
@@ -102,7 +104,8 @@ BEGIN
 	sum(PlannedDone) as PlannedDone,
 	sum(PlannedTotal) as PlannedTotal,
 	sum(UnplannedDone) as UnplannedDone,
-	sum(TotalDone) as TotalDone
+	sum(TotalDone) as TotalDone,
+	sum(RemovedFromSprint) as RemovedFromSprint
 	into #FinalResults1
 	from #results
 	group by Iteration, TeamName, StartDate
@@ -115,10 +118,11 @@ BEGIN
 	PlannedTotal,
 	CASE 
 		WHEN PlannedTotal = 0 THEN 0
-		ELSE (CAST(PlannedDone AS DECIMAL(18, 2)) / CAST(PlannedTotal AS DECIMAL(18, 2))) * 100 
+		ELSE (CAST(PlannedDone AS DECIMAL(18, 2)) / (CAST(PlannedTotal AS DECIMAL(18, 2))-CAST(RemovedFromSprint AS DECIMAL(18, 2)))) * 100 
 	END as 'PercDone',
 	UnplannedDone,
 	TotalDone,
+	RemovedFromSprint,
 	CASE 
 		WHEN TotalDone = 0 THEN 0
 		ELSE (CAST(UnplannedDone AS DECIMAL(18, 2)) / CAST(TotalDone AS DECIMAL(18, 2))) * 100 
@@ -131,6 +135,7 @@ BEGIN
 	Iteration,
 	TeamName,
 	PlannedDone,
+	RemovedFromSprint,
 	PlannedTotal,
 	FORMAT(PercDone, 'N2') + '%' as '% Done',
 	UnplannedDone,
@@ -139,6 +144,3 @@ BEGIN
 	FROM #FinalResults
 	ORDER BY Iteration, PercDone desc
 END
-GO
-
-

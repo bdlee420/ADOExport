@@ -29,7 +29,7 @@ namespace ADOExport.Services
                 //Get rid of WorkItems that were done before the Current Sprint but for some reason still in the Current Sprint
                 var done_workitems_ids = iteration_done_workitems_end.Select(w => w.Id);
                 var iteration_done_workitems_start = await ADOService.GetDoneWorkItemIdsAsOf_Start(start_date, iteration, done_workitems_ids);
-                var ids_to_remove = iteration_done_workitems_start.Select(w => w.Id);                
+                var ids_to_remove = iteration_done_workitems_start.Select(w => w.Id);
                 iteration_all_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
                 iteration_done_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
 
@@ -62,6 +62,12 @@ namespace ADOExport.Services
                 all_work_items.AddRange(await ADOService.GetWorkItemDetails(ids_deleted.ToList(), start_date));
             }
 
+            var removedDict = await WorkItemService.GetTaggedIdsAsync(selectedTeams, iterationsDto, ["Approved Removal"]);
+            var removed = removedDict
+                .Where(w => w.Tag == "Approved Removal")
+                .Select(w => w.WorkItemId)
+                .ToHashSet();
+
             var workItemPlannedData = all_work_items.Select(w =>
             {
                 var key = new CompletionDataKey
@@ -78,7 +84,8 @@ namespace ADOExport.Services
                     IterationId = w.Fields.IterationId,
                     IsDeleted = all_deleted_workitems_end.Contains(key),
                     IsPlanned = !all_unplanned_workitems.Contains(key),
-                    IsDone = all_done_workitems_end.Contains(key)
+                    IsDone = all_done_workitems_end.Contains(key),
+                    IsRemovedFromSprint = !all_done_workitems_end.Contains(key) && removed.Contains(key.WorkItemId)
                 };
 
                 return data;
@@ -87,6 +94,26 @@ namespace ADOExport.Services
             Console.WriteLine($"Get WorkItemPlannedData Count = {workItemPlannedData.Count}");
 
             return workItemPlannedData;
+        }
+
+        private async static Task<List<WorkItemTag>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<string> tags)
+        {
+            var workItemTags = new List<WorkItemTag>();
+
+            //Get all Task Ids that are tagged
+            var workItemsTagged = await ADOService.GetWorkItemIdsByTag(teams, tags);
+
+            foreach (var value in workItemsTagged)
+            {
+                foreach (var workItemId in value.Value
+                    .Where(w => w.Rel == "System.LinkTypes.Hierarchy-Forward" && w.Target != null && w.Target.Id > 0)
+                    .Select(w => w.Target.Id))
+                {
+                    workItemTags.Add(new WorkItemTag { Tag = value.Key, WorkItemId = workItemId });
+                }
+            }
+
+            return workItemTags;
         }
     }
 }

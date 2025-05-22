@@ -474,7 +474,7 @@ namespace ADOExport.Data
 
             try
             {
-                var sql = "CREATE TABLE #WorkItemsPlannedDone(WorkItemId int, EmployeeAdoId VARCHAR(255), IterationId int, AreaAdoId int, IsDone bit, IsPlanned bit, IsDeleted bit);";
+                var sql = "CREATE TABLE #WorkItemsPlannedDone(WorkItemId int, EmployeeAdoId VARCHAR(255), IterationId int, AreaAdoId int, IsDone bit, IsPlanned bit, IsDeleted bit, IsRemovedFromSprint bit);";
                 connection.Execute(sql);
 
                 using (var bulkCopy = new SqlBulkCopy(connection))
@@ -490,6 +490,7 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("IsDone", typeof(bool));
                     dataTable.Columns.Add("IsPlanned", typeof(bool));
                     dataTable.Columns.Add("IsDeleted", typeof(bool));
+                    dataTable.Columns.Add("IsRemovedFromSprint", typeof(bool));
 
                     foreach (var item in data)
                     {
@@ -500,7 +501,8 @@ namespace ADOExport.Data
                             item.AreaAdoId,
                             item.IsDone,
                             item.IsPlanned,
-                            item.IsDeleted
+                            item.IsDeleted,
+                            item.IsRemovedFromSprint
                         );
                     }
 
@@ -509,7 +511,7 @@ namespace ADOExport.Data
 
                 var mergeQuery = @"
                             MERGE INTO WorkItemsPlannedDone AS target
-                            USING (SELECT WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsPlanned, IsDeleted FROM #WorkItemsPlannedDone) AS source
+                            USING (SELECT WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsPlanned, IsDeleted, IsRemovedFromSprint FROM #WorkItemsPlannedDone) AS source
                             ON target.WorkItemId = source.WorkItemId
                             AND target.IterationId = source.IterationId
                             WHEN MATCHED THEN
@@ -519,10 +521,11 @@ namespace ADOExport.Data
                                     target.AreaAdoId = source.AreaAdoId,
                                     target.IsDone = source.IsDone,
                                     target.IsDeleted = source.IsDeleted,
-                                    target.IsPlanned = source.IsPlanned
+                                    target.IsPlanned = source.IsPlanned,
+                                    target.IsRemovedFromSprint = source.IsRemovedFromSprint
                             WHEN NOT MATCHED THEN
-                                INSERT (WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsPlanned, IsDeleted)
-                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationId, source.AreaAdoId, source.IsDone, source.IsPlanned, source.IsDeleted);";
+                                INSERT (WorkItemId, EmployeeAdoId, IterationId, AreaAdoId, IsDone, IsPlanned, IsDeleted, IsRemovedFromSprint)
+                                VALUES (source.WorkItemId, source.EmployeeAdoId, source.IterationId, source.AreaAdoId, source.IsDone, source.IsPlanned, source.IsDeleted, source.IsRemovedFromSprint);";
 
                 connection.Execute(mergeQuery);
             }

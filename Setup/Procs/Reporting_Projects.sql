@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[Reporting_Projects]
+ALTER PROCEDURE [dbo].[Reporting_Projects]
 AS
 BEGIN
 	
@@ -27,15 +27,15 @@ BEGIN
 	p.DevDedication,
 	FORMAT(r.Remaining, 'N1') as Remaining, 
 	FORMAT(p.StartDate, 'MMMM dd yyyy') as StartDate, 
-	FORMAT(DATEADD(d, @Buffer*((r.Remaining/(p.TotalCapacity*p.DevDedication))/@DaysPerWeek*7) + p.QADays, p.ActualStart), 'MMMM dd yyyy') as TargetDate
+	FORMAT(DATEADD(d, @Buffer*((r.Remaining/(p.TotalCapacity*p.DevDedication))/@DaysPerWeek*7) + p.QADays, p.ActualStart), 'MMMM dd yyyy') as TargetDate,
+	FORMAT(p.DueDate, 'MMMM dd yyyy') as DueDate
 	INTO #FinalResults
 	FROM #Projects2 p
 	JOIN #Remaining r on r.Tag = p.Tag
 
-	INSERT INTO Projects (TimeStamp, Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate)
-	SELECT GetDate(), Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate
+	INSERT INTO Projects (TimeStamp, Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate)
+	SELECT GetDate(), Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate
 	FROM #FinalResults
 
 	select * from #FinalResults
 END
-GO

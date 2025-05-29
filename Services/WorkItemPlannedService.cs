@@ -82,7 +82,7 @@ namespace ADOExport.Services
                     EmployeeAdoId = w.Fields.AssignedTo?.Id,
                     AreaAdoId = w.Fields.AreaId,
                     IterationId = w.Fields.IterationId,
-                    IsDeleted = all_deleted_workitems_end.Contains(key),
+                    IsDeleted = all_deleted_workitems_end.Contains(key) || w.Fields.State == "Removed",
                     IsPlanned = !all_unplanned_workitems.Contains(key),
                     IsDone = all_done_workitems_end.Contains(key),
                     IsRemovedFromSprint = !all_done_workitems_end.Contains(key) && removed.Contains(key.WorkItemId)

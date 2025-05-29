@@ -21,7 +21,7 @@ namespace ADOExport.Services
                                     FROM workitems 
                                     WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
                                     AND [System.State] NOT IN ('Done', 'Closed', 'Removed') 
-                                    AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect')
+                                    AND [System.WorkItemType] IN ('Defect', 'Task')  
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}'";
 
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
@@ -60,6 +60,7 @@ namespace ADOExport.Services
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
                                     AND [System.State] IN ('Done', 'Closed', 'Removed')                                     
+                                    AND [System.WorkItemType] IN ('Defect', 'Task')  
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
 
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
@@ -97,7 +98,8 @@ namespace ADOExport.Services
                 var workitems = new List<WorkItem>();
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
-                                    AND [System.State] IN ('Done', 'Closed', 'Removed')                                     
+                                    AND [System.State] IN ('Done', 'Closed', 'Removed')             
+                                    AND [System.WorkItemType] IN ('Defect', 'Task')  
                                     AND [System.Id] IN ({string.Join(",", ids)})  
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
 
@@ -133,6 +135,7 @@ namespace ADOExport.Services
                 var workitems = new List<WorkItem>();
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
+                                    AND [System.WorkItemType] IN ('Defect', 'Task')  
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
 
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
@@ -174,7 +177,7 @@ namespace ADOExport.Services
 
                     var conditions = teams.Select(team => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" ( {string.Join(" OR ", conditions)} ) ";
-                    query += " AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect' OR [System.WorkItemType] = 'Deployment' )) ORDER BY [System.IterationPath], [System.AssignedTo]";
+                    query += " AND ( [System.WorkItemType] = 'Task' OR [System.WorkItemType] = 'Defect')) ORDER BY [System.IterationPath], [System.AssignedTo]";
                     var queryRequest = new QueryRequest
                     {
                         Query = query
@@ -310,7 +313,7 @@ namespace ADOExport.Services
 
                     query += $" AND ( [Source].[System.WorkItemType] = '{parentType}'))";
                     query += $" AND ([Target].[System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' AND [Target].[System.State] IN ('Done', 'Closed') ";
-                    query += $" AND ( [Target].[System.WorkItemType] = 'Task' OR [Target].[System.WorkItemType] = 'Defect'  OR [Target].[System.WorkItemType] = 'Deployment') ";
+                    query += $" AND ( [Target].[System.WorkItemType] = 'Task' OR [Target].[System.WorkItemType] = 'Defect') ";
                     var conditions = teams.Select(team => $"[Target].[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{team.AreaName}'");
                     query += $" AND ( {string.Join(" OR ", conditions)} ) ";
                     query += $" AND [Target].[System.IterationPath] = '{SettingsService.CurrentSettings.ProjectName}\\\\Current\\\\Feature Release\\\\{iteration.Name}' ";
@@ -352,7 +355,7 @@ namespace ADOExport.Services
 
                     var asOfFilter = asOf.HasValue ? $"asOf={asOf.Value}&" : string.Empty;
 
-                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,Microsoft.VSTS.Scheduling.RemainingWork,Microsoft.VSTS.Common.Activity,System.IterationId,System.AreaPath,System.AreaId&{asOfFilter}api-version=7.1";
+                    var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,Microsoft.VSTS.Scheduling.RemainingWork,Microsoft.VSTS.Common.Activity,System.IterationId,System.AreaPath,System.State,System.AreaId&{asOfFilter}api-version=7.1";
 
                     var queryResponse = await WebClientHelper.GetAsync<WorkItemReponse>(url, SettingsService.CurrentSettings.PersonalAccessToken);
 

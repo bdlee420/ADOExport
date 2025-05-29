@@ -1,10 +1,11 @@
-CREATE PROCEDURE [dbo].[Reporting_Tracked_By_Iteration]
+ALTER PROCEDURE [dbo].[Reporting_Tracked_By_Iteration]
 	@Tags varchar(1000) = null,
 	@IterationNames varchar(1000) = null,
 	@IterationQuarters varchar(1000) = null,
 	@StartDate datetime = null,
 	@Teams varchar(1000) = null,
 	@ParentTypes varchar(1000) = null,
+	@ExcludeTags varchar(1000) = null,
 	@WorkItemTypes varchar(1000) = null,
 	@Advanced bit = 0
 AS
@@ -36,7 +37,7 @@ BEGIN
 			SELECT TagName INTO #TagStrings FROM SplitStrings
 
 			INSERT INTO #WorkItemTagIds (WorkItemId)
-			SELECT WorkItemId
+			SELECT DISTINCT WorkItemId
 			FROM WorkItemTags w
 			JOIN #TagStrings ts on w.Tag = ts.TagName
 		END	
@@ -80,17 +81,36 @@ BEGIN
 
 
 	IF @ParentTypes is not null
-		BEGIN
+		BEGIN	
 			WITH SplitStrings AS (
 				SELECT value
 				FROM STRING_SPLIT(@ParentTypes, ',')
 			)
 			SELECT value INTO #ParentTypesStrings FROM SplitStrings
 
-			INSERT INTO #WorkItemTagIds (WorkItemId)
-			SELECT WorkItemId
-			FROM WorkItems w
-			JOIN #ParentTypesStrings pt on pt.value = w.ParentType
+			IF @ExcludeTags is not null
+				BEGIN
+					WITH SplitStrings AS (
+						SELECT value as TagName
+						FROM STRING_SPLIT(@ExcludeTags, ',')
+					)
+					SELECT TagName INTO #ExcludeTagStrings FROM SplitStrings
+
+					INSERT INTO #WorkItemTagIds (WorkItemId)
+					SELECT DISTINCT w.WorkItemId
+					from workitems w
+					JOIN #ParentTypesStrings pt on pt.value = w.ParentType
+					LEFT JOIN WorkItemTags wt on wt.WorkItemId = w.WorkItemId
+					LEFT JOIN #ExcludeTagStrings ts on wt.Tag = ts.TagName
+					WHERE ts.TagName is null
+				END
+			ELSE
+				BEGIN			
+					INSERT INTO #WorkItemTagIds (WorkItemId)
+					SELECT DISTINCT WorkItemId
+					FROM WorkItems w
+					JOIN #ParentTypesStrings pt on pt.value = w.ParentType
+				END
 		END	
 
 	IF @WorkItemTypes is not null
@@ -102,7 +122,7 @@ BEGIN
 			SELECT value INTO #WorkItemTypeStrings FROM SplitStrings
 
 			INSERT INTO #WorkItemTagIds (WorkItemId)
-			SELECT WorkItemId
+			SELECT DISTINCT WorkItemId
 			FROM WorkItems w
 			JOIN #WorkItemTypeStrings pt on pt.value = w.WorkItemType
 		END	
@@ -236,4 +256,3 @@ BEGIN
 	FROM #FinalResults
 	ORDER BY iteration desc, Tracked desc
 END
-GO

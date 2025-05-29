@@ -76,7 +76,7 @@ BEGIN
 			WHERE i.StartDate >= @StartDate
 		END	
 
-	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned, w.IsRemovedFromSprint
+	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned, w.IsRemovedFromSprint, w.IsDeleted
 	into #tmp
 	from WorkItemsPlannedDone w
 	join #iterations i on i.Id = w.IterationId
@@ -84,7 +84,7 @@ BEGIN
 	select 
 	t.Name as TeamName, 
 	i.name as Iteration,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
+	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.IsDeleted = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,

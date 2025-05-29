@@ -42,6 +42,9 @@ namespace ADOExport.Models
         [JsonProperty("System.IterationPath")]
         internal required string IterationPath { get; set; }
 
+        [JsonProperty("System.State")]
+        internal required string State { get; set; }
+
         [JsonProperty("System.IterationId")]
         internal int IterationId { get; set; }
 

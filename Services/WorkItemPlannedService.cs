@@ -20,10 +20,14 @@ namespace ADOExport.Services
                 var start_date = is_3_week_sprint ? iteration.StartDate.AddDays(-1) : iteration.StartDate;
                 var end_date = is_3_week_sprint ? iteration.EndDate.AddDays(4) : iteration.EndDate.AddDays(1);
 
+                //Get all planned workitems. This is all tasks and defects that exist in a non closed state at the beginning of the sprint
                 var planned_workitems_start = await ADOService.GetNotDoneWorkItemIdsAsOf_Start(start_date, iteration, selectedTeams);
                 var planned_workitems_ids = planned_workitems_start.Select(s => s.Id).ToHashSet();
 
+                //Get all workitems that are closed as of the end date for this iteration
                 var iteration_done_workitems_end = await ADOService.GetDoneWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
+
+                //Get all workitems tas of the end date for this iteration
                 var iteration_all_workitems_end = await ADOService.GetAllWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
 
                 //Get rid of WorkItems that were done before the Current Sprint but for some reason still in the Current Sprint

@@ -15,6 +15,11 @@ namespace ADOExport.Models
 
         [JsonProperty("url")]
         internal required string Url { get; set; }
+
+        public override string? ToString()
+        {
+            return Id.ToString();
+        }
     }
 
     internal class QueryChildrenResponse

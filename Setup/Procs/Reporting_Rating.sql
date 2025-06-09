@@ -84,12 +84,12 @@ BEGIN
 
 	drop table if exists #EmployeeBCE
 
-	SELECT		TOP 1 WITH TIES EmployeeAdoId, (case when b.BCE is null then 1.3 else b.bce end) as BCE, Rating
+	SELECT		TOP 1 WITH TIES e.EmployeeAdoId, (case when er.BCE is null then 1.3 else er.bce end) as BCE, er.Rating
 	INTO		#EmployeeBCE	
 	FROM		Employees e
-	LEFT JOIN	BlueOptima b on b.Employee = e.Name
-	WHERE		b.TimeStamp <= @BCETimeStamp
-	ORDER BY ROW_NUMBER() OVER (PARTITION BY EmployeeAdoId ORDER BY TimeStamp desc)
+	LEFT JOIN	EmployeeRatings er on er.Employee = e.Name
+	WHERE		er.TimeStamp <= @BCETimeStamp
+	ORDER BY ROW_NUMBER() OVER (PARTITION BY e.EmployeeAdoId ORDER BY TimeStamp desc)
 
 	drop table if exists #results2
 	select e.EmployeeAdoId,
@@ -186,7 +186,7 @@ BEGIN
 					(ADORating+BlueOptimaRating+ManagerRating+TeamLeadPoints+DevPoints) as TotalRating
 					from #finalresults r
 					where @FilterTeam is null OR Team = @FilterTeam
-					order by MetricRating desc
+					order by TotalRating desc
 				END
 		END
 END

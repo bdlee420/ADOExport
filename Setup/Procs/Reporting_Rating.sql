@@ -7,14 +7,10 @@ ALTER PROCEDURE [dbo].[Reporting_Rating]
 	@FilterTeam varchar(50) = null,
 	@Sprints varchar(1000) = null,
 	@ShowOutput bit = 1,
-	@BCETimeStamp datetime = null
+	@StartDate datetime = null,
+	@EndDate datetime = null
 AS
 BEGIN
-	IF @BCETimeStamp is null
-		BEGIN
-			SET @BCETimeStamp = GetDate()
-		END
-
 	DROP TABLE IF EXISTS #Sprints
 	CREATE TABLE #Sprints (Sprint varchar(200))
 
@@ -29,6 +25,16 @@ BEGIN
 		INSERT INTO #Sprints (Sprint)
 		SELECT value
 		FROM #IterationStrings
+	END	
+
+	IF @StartDate is not null AND @EndDate is not null
+	BEGIN
+		DELETE FROM #Sprints
+
+		INSERT INTO #Sprints (Sprint)
+		SELECT	Name
+		FROM	Iterations
+		WHERE	EndDate >= @StartDate AND EndDate <= @EndDate
 	END	
 
 	drop table if exists #tmp_stats_year
@@ -88,7 +94,7 @@ BEGIN
 	INTO		#EmployeeBCE	
 	FROM		Employees e
 	LEFT JOIN	EmployeeRatings er on er.Employee = e.Name
-	WHERE		er.TimeStamp <= @BCETimeStamp
+	WHERE		er.TimeStamp <= @EndDate
 	ORDER BY ROW_NUMBER() OVER (PARTITION BY e.EmployeeAdoId ORDER BY TimeStamp desc)
 
 	drop table if exists #results2

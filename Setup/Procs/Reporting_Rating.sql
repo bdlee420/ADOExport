@@ -1,13 +1,20 @@
-CREATE PROCEDURE [dbo].[Reporting_Rating]
+ALTER PROCEDURE [dbo].[Reporting_Rating]
 	@Team varchar(50) = null,
 	@Employee varchar(50) = null,
 	@ShowLeads bit = 1,
 	@ShowContractors bit = 0,
 	@LimitedView bit = 0,
 	@FilterTeam varchar(50) = null,
-	@Sprints varchar(1000) = null
+	@Sprints varchar(1000) = null,
+	@ShowOutput bit = 1,
+	@BCETimeStamp datetime = null
 AS
 BEGIN
+	IF @BCETimeStamp is null
+		BEGIN
+			SET @BCETimeStamp = GetDate()
+		END
+
 	DROP TABLE IF EXISTS #Sprints
 	CREATE TABLE #Sprints (Sprint varchar(200))
 
@@ -75,6 +82,14 @@ BEGIN
 	DECLARE @ManagerRatingGoal decimal = 7
 	DECLARE @BlueOptimaGoal decimal = 2
 
+	drop table if exists #EmployeeBCE
+
+	SELECT		TOP 1 WITH TIES EmployeeAdoId, (case when b.BCE is null then 1.3 else b.bce end) as BCE, Rating
+	INTO		#EmployeeBCE	
+	FROM		Employees e
+	LEFT JOIN	BlueOptima b on b.Employee = e.Name
+	WHERE		b.TimeStamp <= @BCETimeStamp
+	ORDER BY ROW_NUMBER() OVER (PARTITION BY EmployeeAdoId ORDER BY TimeStamp desc)
 
 	drop table if exists #results2
 	select e.EmployeeAdoId,
@@ -85,7 +100,7 @@ BEGIN
 	((e.rating/@ManagerRatingGoal) * 2) as ManagerRating
 	into #results2
 	from #results r
-	join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
+	join #EmployeeBCE e on e.EmployeeAdoId = r.EmployeeAdoId
 
 	drop table if exists #visibleEmployees
 	select e.EmployeeAdoId, e.TeamName, e.Name as Employee
@@ -114,61 +129,64 @@ BEGIN
 	join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
 	left join #visibleEmployees ve on ve.EmployeeAdoId = r.EmployeeAdoId
 
+
 	--------------------------RESULTS--------------------------
-	IF @LimitedView = 1
+	IF @ShowOutput = 1
 		BEGIN
-			select 
-			case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
-			case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
-			FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
-			FORMAT(r.Efficiency, 'N2') as Efficiency, 
-			FORMAT(r.Total, 'N2') as Total
-			from #results r
-			join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
-			left join #visibleEmployees ve on ve.EmployeeAdoId = e.EmployeeAdoId
-			where @FilterTeam is null OR e.TeamName = @FilterTeam
-			order by Efficiency desc
+			IF @LimitedView = 1
+				BEGIN
+					select 
+					case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
+					case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
+					FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
+					FORMAT(r.Efficiency, 'N2') as Efficiency, 
+					FORMAT(r.Total, 'N2') as Total
+					from #results r
+					join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
+					left join #visibleEmployees ve on ve.EmployeeAdoId = e.EmployeeAdoId
+					where @FilterTeam is null OR e.TeamName = @FilterTeam
+					order by Efficiency desc
 
-			select 
-			Team,
-			Name, 
-			Activity,
-			FORMAT(ADORating, 'N2') as ADORating, 
-			FORMAT(BlueOptimaRating, 'N2') as BlueOptimaRating, 
-			FORMAT((ADORating+BlueOptimaRating+ManagerRating+TeamLeadPoints+DevPoints), 'N2') as TotalRating
-			from #finalresults r
-			where @FilterTeam is null OR Team = @FilterTeam
-			order by TotalRating desc
-		END
-	ELSE
-		BEGIN 
-			select 
-			case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
-			case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
-			FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
-			FORMAT(r.RecentCapacity, 'N2') as RecentCapacity, 
-			FORMAT(r.Efficiency, 'N2') as Efficiency, 
-			FORMAT(r.Total, 'N2') as Total		
-			from #results r
-			join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
-			left join #visibleEmployees ve on ve.EmployeeAdoId = e.EmployeeAdoId
-			where @FilterTeam is null OR e.TeamName = @FilterTeam
-			order by Efficiency desc
+					select 
+					Team,
+					Name, 
+					Activity,
+					FORMAT(ADORating, 'N2') as ADORating, 
+					FORMAT(BlueOptimaRating, 'N2') as BlueOptimaRating, 
+					FORMAT((ADORating+BlueOptimaRating+ManagerRating+TeamLeadPoints+DevPoints), 'N2') as TotalRating
+					from #finalresults r
+					where @FilterTeam is null OR Team = @FilterTeam
+					order by TotalRating desc
+				END
+			ELSE
+				BEGIN 
+					select 
+					case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
+					case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
+					FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
+					FORMAT(r.RecentCapacity, 'N2') as RecentCapacity, 
+					FORMAT(r.Efficiency, 'N2') as Efficiency, 
+					FORMAT(r.Total, 'N2') as Total		
+					from #results r
+					join Employees e on e.EmployeeAdoId = r.EmployeeAdoId
+					left join #visibleEmployees ve on ve.EmployeeAdoId = e.EmployeeAdoId
+					where @FilterTeam is null OR e.TeamName = @FilterTeam
+					order by Efficiency desc
 
-			select 
-			Team,
-			Name, 
-			Activity,
-			FORMAT(ADORating, 'N2') as ADORating, 
-			FORMAT(BlueOptimaRating, 'N2') as BlueOptimaRating, 
-			FORMAT(ManagerRating, 'N2') as ManagerRating, 		
-			TeamLeadPoints,
-			DevPoints,
-			(ADORating+BlueOptimaRating+ManagerRating+TeamLeadPoints+DevPoints) as TotalRating
-			from #finalresults r
-			where @FilterTeam is null OR Team = @FilterTeam
-			order by TotalRating desc
+					select 
+					Team,
+					Name, 
+					Activity,
+					FORMAT(ADORating, 'N2') as ADORating, 
+					FORMAT(BlueOptimaRating, 'N2') as BlueOptimaRating, 
+					FORMAT(ADORating + BlueOptimaRating, 'N2') as MetricRating, 
+					FORMAT(ManagerRating, 'N2') as ManagerRating, 		
+					TeamLeadPoints,
+					DevPoints,
+					(ADORating+BlueOptimaRating+ManagerRating+TeamLeadPoints+DevPoints) as TotalRating
+					from #finalresults r
+					where @FilterTeam is null OR Team = @FilterTeam
+					order by MetricRating desc
+				END
 		END
 END
-GO
-

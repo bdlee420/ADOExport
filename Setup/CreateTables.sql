@@ -103,3 +103,13 @@ CREATE TABLE Projects
 	StartDate datetime, 
 	TargetDate datetime
 )
+
+drop table if exists BlueOptima
+
+CREATE TABLE BlueOptima (
+    Employee VARCHAR(100),
+    BCE decimal(28,12),
+	Timestamp datetime
+)
+
+ALTER TABLE [dbo].[BlueOptima] ADD  CONSTRAINT [DF_BlueOptima_Timestamp]  DEFAULT (getdate()) FOR [Timestamp]

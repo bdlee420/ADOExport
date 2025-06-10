@@ -15,7 +15,29 @@
         {
             return $"{WorkItemId}-{IterationId}-{AreaAdoId}-{EmployeeAdoId}";
         }
-    }   
+    }
+
+    internal class WorkItemPlannedDataComparer : IEqualityComparer<WorkItemPlannedData>
+    {
+        public bool Equals(WorkItemPlannedData x, WorkItemPlannedData y)
+        {
+            // Define equality based on WorkItemId
+            return x.WorkItemId == y.WorkItemId && 
+                x.EmployeeAdoId == y.EmployeeAdoId && 
+                x.IsPlanned == y.IsPlanned && 
+                x.IsDeleted == y.IsDeleted &&
+                x.IsDone == y.IsDone &&
+                x.IterationId == y.IterationId &&
+                x.AreaAdoId == y.AreaAdoId &&
+                x.IsRemovedFromSprint == y.IsRemovedFromSprint;
+        }
+
+        public int GetHashCode(WorkItemPlannedData obj)
+        {
+            // Use WorkItemId for hash code
+            return obj.WorkItemId.GetHashCode();
+        }
+    }
 
     internal class CompletionDataKey
     {

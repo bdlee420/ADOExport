@@ -95,9 +95,11 @@ namespace ADOExport.Services
                 return data;
             }).ToList();
 
+            var deduplicatedWorkItems = workItemPlannedData.Distinct(new WorkItemPlannedDataComparer()).ToList();
+
             Console.WriteLine($"Get WorkItemPlannedData Count = {workItemPlannedData.Count}");
 
-            return workItemPlannedData;
+            return deduplicatedWorkItems;
         }
 
         private async static Task<List<WorkItemTag>> GetTaggedIdsAsync(IEnumerable<Team> teams, List<string> tags)

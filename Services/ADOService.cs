@@ -5,10 +5,17 @@ namespace ADOExport.Services
 {
     internal class ADOService
     {
+        private static string GetUTCDateString(DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day, 4, 0, 0, DateTimeKind.Utc).ToString("o");
+        }
+
         internal static async Task<List<WorkItem>> GetNotDoneWorkItemIdsAsOf_Start(DateTime asOf, IterationDto iteration, IEnumerable<Team> teams)
         {
             try
             {
+                var asOfString = GetUTCDateString(asOf);
+
                 if (SettingsService.CurrentSettings is null)
                     throw new NullReferenceException("SettingsService.CurrentSettings");
 
@@ -27,7 +34,7 @@ namespace ADOExport.Services
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
                 query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
 
-                query += $" ASOF '{asOf}' ";
+                query += $" ASOF '{asOfString}' ";
 
                 var queryRequest = new QueryRequest
                 {
@@ -56,6 +63,8 @@ namespace ADOExport.Services
                 if (SettingsService.CurrentInputs is null)
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
+                var asOfString = GetUTCDateString(asOf);
+
                 var workitems = new List<WorkItem>();
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
@@ -66,7 +75,7 @@ namespace ADOExport.Services
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
                 query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
 
-                query += $" ASOF '{asOf}' ";
+                query += $" ASOF '{asOfString}' ";
 
                 var queryRequest = new QueryRequest
                 {
@@ -95,6 +104,8 @@ namespace ADOExport.Services
                 if (SettingsService.CurrentInputs is null)
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
+                var asOfString = GetUTCDateString(asOf);
+
                 var workitems = new List<WorkItem>();
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
@@ -103,7 +114,7 @@ namespace ADOExport.Services
                                     AND [System.Id] IN ({string.Join(",", ids)})  
                                     AND [System.IterationPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\Current\Feature Release\{iteration.Name}' ";
 
-                query += $" ASOF '{asOf}' ";
+                query += $" ASOF '{asOfString}' ";
 
                 var queryRequest = new QueryRequest
                 {
@@ -132,6 +143,8 @@ namespace ADOExport.Services
                 if (SettingsService.CurrentInputs is null)
                     throw new NullReferenceException("SettingsService.CurrentInputs");
 
+                var asOfString = GetUTCDateString(asOf);
+
                 var workitems = new List<WorkItem>();
                 //AND [System.Id] IN ({string.Join(",", ids)}) 
                 string query = $@"SELECT [System.Id] FROM workitems WHERE [System.TeamProject] = '{SettingsService.CurrentSettings.ProjectName}' 
@@ -141,7 +154,7 @@ namespace ADOExport.Services
                 var conditionsAreas = teams.Select(t => $"[System.AreaPath] UNDER '{SettingsService.CurrentSettings.ProjectName}\\\\{t.AreaName}'");
                 query += $" AND ( {string.Join(" OR ", conditionsAreas)} ) ";
 
-                query += $" ASOF '{asOf}' ";
+                query += $" ASOF '{asOfString}' ";
 
                 var queryRequest = new QueryRequest
                 {
@@ -353,7 +366,7 @@ namespace ADOExport.Services
 
                     var workItemIdsString = string.Join(",", batch);
 
-                    var asOfFilter = asOf.HasValue ? $"asOf={asOf.Value}&" : string.Empty;
+                    var asOfFilter = asOf.HasValue ? $"asOf={GetUTCDateString(asOf.Value)}&" : string.Empty;
 
                     var url = $"{SettingsService.CurrentSettings.ProjectName}/_apis/wit/workitems?ids={workItemIdsString}&fields=Id,System.AssignedTo,Microsoft.VSTS.Scheduling.OriginalEstimate,System.WorkItemType,System.IterationPath,Microsoft.VSTS.Scheduling.RemainingWork,Microsoft.VSTS.Common.Activity,System.IterationId,System.AreaPath,System.State,System.AreaId&{asOfFilter}api-version=7.1";
 

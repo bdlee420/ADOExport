@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.Services.Common;
 namespace ADOExport.Services
 {
     internal class WorkItemPlannedService
-    {
+    {        
         internal async static Task<List<WorkItemPlannedData>> GetWorkItemPlannedData(IEnumerable<Team> selectedTeams, List<IterationDto> iterationsDto)
         {
             var all_work_items = new List<WorkItemDetails>();

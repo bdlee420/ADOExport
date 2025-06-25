@@ -67,10 +67,18 @@ namespace ADOExport.Common
             SetClientHeaders(client, token);
             url = $"https://dev.azure.com/{SettingsService.CurrentSettings.RootUrl}/{url}";
             using HttpResponseMessage response = client.GetAsync(url).Result;
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<ADOResponse>(jsonResponse);
+            if (result.message != null)
+                Console.WriteLine(result.message);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
             var res = JsonConvert.DeserializeObject<Tres>(responseBody) ?? throw new Exception("Shouldn't be null");
             return res;
+        }
+        public class ADOResponse
+        {
+            public string message { get; set; }
         }
     }
 }

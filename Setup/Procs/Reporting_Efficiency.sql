@@ -141,8 +141,8 @@ BEGIN
 	FORMAT(TotalQA/tq.Days, 'N2') as 'QA Efficiency',
 
 	FORMAT(ISNULL(tq.Days,0)+ISNULL(td.Days,0), 'N2') as 'Total',
-	FORMAT(ISNULL(TotalDev,0)+ISNULL(TotalQA,0), 'N2') as 'Velocity',
-	FORMAT((ISNULL(TotalDev,0)+ISNULL(TotalQA,0))/(ISNULL(tq.Days,0)+ISNULL(td.Days,0)), 'N2') as 'Efficiency'
+	FORMAT(ISNULL(TotalDev,0)+ISNULL(TotalQA,0), 'N2') as 'Velocity',	
+	case when ISNULL(tq.Days,0) = 0 OR ISNULL(td.Days,0) = 0 then 0.0 else FORMAT((ISNULL(TotalDev,0)+ISNULL(TotalQA,0))/(ISNULL(tq.Days,0)+ISNULL(td.Days,0)), 'N2') end as 'Efficiency'
 
 	INTO #FinalResults
 	FROM #Results r
@@ -152,6 +152,8 @@ BEGIN
 	ON td.Name = r.name  and td.Iteration = r.Iteration
 	--ORDER BY TotalDev/td.Days desc
 	--ORDER BY IsCompliance / Total desc
+
+	select * from #FinalResults
 
 	if @Advanced = 1
 		select * from #FinalResults

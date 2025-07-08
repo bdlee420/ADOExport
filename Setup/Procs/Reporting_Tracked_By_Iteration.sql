@@ -26,7 +26,7 @@ BEGIN
 
 	CREATE TABLE #Iterations (Id int, Name varchar(200))
 	CREATE TABLE #WorkItemTagIds (WorkItemId int)
-	CREATE TABLE #Teams (Team varchar(200))
+	CREATE TABLE #Teams (Id varchar(200), Team varchar(200))
 	
 	IF @Tags is not null
 		BEGIN
@@ -135,15 +135,15 @@ BEGIN
 			)
 			SELECT TeamName INTO #TeamsStrings FROM SplitStrings
 
-			INSERT INTO #Teams (Team)
-			SELECT Name as Team
+			INSERT INTO #Teams (Id, Team)
+			SELECT t.Id, Name as Team
 			FROM Teams t
 			JOIN #TeamsStrings ts on t.Name = ts.TeamName
 		END
 	ELSE
 		BEGIN
-			INSERT INTO #Teams (Team)
-			SELECT Name as Team
+			INSERT INTO #Teams (Id, Team)
+			SELECT Id, Name as Team
 			FROM Teams
 		END
 	
@@ -159,35 +159,35 @@ BEGIN
 	i2.Name as Iteration,
 	t.name,
 
-	(select sum(w.Estimate) 
+	ISNULL((select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
 	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 1
 	JOIN #WorkItemTagIds wt on wt.WorkItemId = w.WorkItemId
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as IsComplianceDev,
+	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as IsComplianceDev,
 
-	(select sum(w.Estimate) 
+	ISNULL((select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
 	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 1
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as TotalDev,
+	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as TotalDev,
 
-	(select sum(w.Estimate) 
+	ISNULL((select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
 	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 0
 	JOIN #WorkItemTagIds wt on wt.WorkItemId = w.WorkItemId
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as IsComplianceQA,
+	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as IsComplianceQA,
 
-	(select sum(w.Estimate) 
+	ISNULL((select sum(w.Estimate) 
 	from WorkItems w 
 	JOIN Iterations i on w.IterationId = i.Id 
 	JOIN #Iterations it on it.Id = i.Id
 	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 0
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name) as TotalQA
+	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as TotalQA
 
 	INTO #Results
 	FROM Teams t
@@ -195,26 +195,19 @@ BEGIN
 	CROSS JOIN #Iterations i2 
 	join Areas a on t.areaId = a.id
 
-	select i2.Name as Iteration, t.Name, sum(Days) as Days
-	into #TeamCapacityDev
-	from DevCapacity dc
-	join teams t on dc.TeamAdoId = t.id
-	JOIN #Teams t2 on t2.Team = t.Name
-	JOIN Iterations i on dc.IterationAdoId = i.Id 
-	JOIN #Iterations i2 on i2.Id = i.Id
-	WHERE dc.IsDev = 1
-	group by t.name, i2.Name
+	select		i.Name as Iteration, t.Team as Name, ISNULL(sum(Days),0) as Days
+	into		#TeamCapacityDev
+	FROM		#Iterations i
+	CROSS JOIN	#Teams t
+	LEFT JOIN	DevCapacity dc on dc.TeamAdoId = t.id and dc.IsDev = 1
+	GROUP BY	t.Team, i.Name
 
-	select i2.Name as Iteration, t.Name, sum(Days) as Days
-	into #TeamCapacityQA
-	from DevCapacity dc
-	join teams t on dc.TeamAdoId = t.id
-	JOIN #Teams t2 on t2.Team = t.Name
-	JOIN Iterations i on dc.IterationAdoId = i.Id 
-	JOIN #Iterations i2 on i2.Id = i.Id
-	WHERE dc.IsDev = 0
-	group by t.name, i2.Name
-
+	select		i.Name as Iteration, t.Team as Name, ISNULL(sum(Days),0) as Days
+	into		#TeamCapacityQA
+	FROM		#Iterations i
+	CROSS JOIN	#Teams t
+	LEFT JOIN	DevCapacity dc on dc.TeamAdoId = t.id and dc.IsDev = 0
+	GROUP BY	t.Team, i.Name
 
 	SELECT
 	r.Iteration,

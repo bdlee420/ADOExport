@@ -32,10 +32,13 @@ namespace ADOExport.Services
 
                 //Get rid of WorkItems that were done before the Current Sprint but for some reason still in the Current Sprint
                 var done_workitems_ids = iteration_done_workitems_end.Select(w => w.Id);
-                var iteration_done_workitems_start = await ADOService.GetDoneWorkItemIdsAsOf_Start(start_date, iteration, done_workitems_ids);
-                var ids_to_remove = iteration_done_workitems_start.Select(w => w.Id);
-                iteration_all_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
-                iteration_done_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
+                if (done_workitems_ids.Any())
+                {
+                    var iteration_done_workitems_start = await ADOService.GetDoneWorkItemIdsAsOf_Start(start_date, iteration, done_workitems_ids);
+                    var ids_to_remove = iteration_done_workitems_start.Select(w => w.Id);
+                    iteration_all_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
+                    iteration_done_workitems_end.RemoveAll(w => ids_to_remove.Contains(w.Id));
+                }
 
                 var ids_not_deleted = iteration_all_workitems_end.Select(r => r.Id).ToList();
                 var ids_deleted = planned_workitems_ids.Except(ids_not_deleted).ToHashSet();

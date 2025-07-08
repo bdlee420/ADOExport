@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[Reporting_Efficiency]
+ALTER PROCEDURE [dbo].[Reporting_Efficiency]
 	@IterationNames varchar(1000) = null,
 	@IterationQuarters varchar(1000) = null,
 	@StartDate datetime = null,
@@ -131,7 +131,6 @@ BEGIN
 	WHERE dc.IsDev = 0
 	group by t.name, i2.Name
 
-
 	SELECT
 	r.Iteration,
 	r.name as Team,
@@ -141,15 +140,15 @@ BEGIN
 	FORMAT(TotalQA, 'N2') as 'QA Total (days)',
 	FORMAT(TotalQA/tq.Days, 'N2') as 'QA Efficiency',
 
-	FORMAT(tq.Days+td.Days, 'N2') as 'Total',
-	FORMAT(TotalDev+TotalQA, 'N2') as 'Velocity',
-	FORMAT((TotalDev+TotalQA)/(tq.Days+td.Days), 'N2') as 'Efficiency'
+	FORMAT(ISNULL(tq.Days,0)+ISNULL(td.Days,0), 'N2') as 'Total',
+	FORMAT(ISNULL(TotalDev,0)+ISNULL(TotalQA,0), 'N2') as 'Velocity',
+	FORMAT((ISNULL(TotalDev,0)+ISNULL(TotalQA,0))/(ISNULL(tq.Days,0)+ISNULL(td.Days,0)), 'N2') as 'Efficiency'
 
 	INTO #FinalResults
 	FROM #Results r
-	JOIN #TeamCapacityQA tq
+	LEFT JOIN #TeamCapacityQA tq
 	ON tq.Name = r.name and tq.Iteration = r.Iteration
-	JOIN #TeamCapacityDev td
+	LEFT JOIN #TeamCapacityDev td
 	ON td.Name = r.name  and td.Iteration = r.Iteration
 	--ORDER BY TotalDev/td.Days desc
 	--ORDER BY IsCompliance / Total desc

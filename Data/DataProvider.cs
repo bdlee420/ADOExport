@@ -396,6 +396,8 @@ namespace ADOExport.Data
             using var connection = new SqlConnection(GetConnectionString());
             connection.Open();
 
+            var dataDistinct = data.Distinct();
+            
             try
             {
                 var sql = "CREATE TABLE #WorkItems (WorkItemId int NOT NULL, EmployeeAdoId VARCHAR(255), IterationPath VARCHAR(255), IterationId int, WorkItemType VARCHAR(20), Estimate DECIMAL(28,12), Remaining DECIMAL(28,12), AreaAdoId int, ParentType varchar(50), IsDone bit, Activity varchar(50));";
@@ -419,7 +421,7 @@ namespace ADOExport.Data
                     dataTable.Columns.Add("IsDone", typeof(bool));
                     dataTable.Columns.Add("Activity", typeof(string));
 
-                    foreach (var item in data)
+                    foreach (var item in dataDistinct)
                     {
                         dataTable.Rows.Add(
                             item.WorkItemId,

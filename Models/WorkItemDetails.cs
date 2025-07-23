@@ -64,7 +64,7 @@ namespace ADOExport.Models
         internal string Activity { get; set; }
     }
 
-    internal class WorkItemDetailsDto
+    internal class WorkItemDetailsDto : IEquatable<WorkItemDetailsDto>
     {
         internal int WorkItemId { get; set; }
 
@@ -84,13 +84,58 @@ namespace ADOExport.Models
 
         internal string ParentType { get; set; }
 
-        internal bool IsDone { get;set; }
+        internal bool IsDone { get; set; }
 
         internal string Activity { get; set; }
 
         public override string? ToString()
         {
             return $"{WorkItemType}-{WorkItemId}-{IterationPath}";
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as WorkItemDetailsDto);
+        }
+
+        public bool Equals(WorkItemDetailsDto? other)
+        {
+            if (other is null) return false;
+            return WorkItemId == other.WorkItemId
+                && AreaAdoId == other.AreaAdoId
+                && IterationPath == other.IterationPath
+                && IterationId == other.IterationId
+                && WorkItemType == other.WorkItemType
+                && EmployeeAdoId == other.EmployeeAdoId
+                && Estimate == other.Estimate
+                && Remaining == other.Remaining
+                && ParentType == other.ParentType
+                && IsDone == other.IsDone
+                && Activity == other.Activity;
+        }
+
+        public override int GetHashCode()
+        {
+            // Split the HashCode.Combine call into multiple calls to handle the limitation of 8 arguments per Combine.
+            int hash1 = HashCode.Combine(
+                WorkItemId,
+                AreaAdoId,
+                IterationPath,
+                IterationId,
+                WorkItemType,
+                EmployeeAdoId,
+                Estimate,
+                Remaining
+            );
+
+            int hash2 = HashCode.Combine(
+                ParentType,
+                IsDone,
+                Activity
+            );
+
+            // Combine the two hashes into a final hash value.
+            return HashCode.Combine(hash1, hash2);
         }
     }
 

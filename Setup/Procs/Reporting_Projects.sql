@@ -9,20 +9,22 @@ BEGIN
 	DECLARE @DaysPerWeek decimal(4,2) = 4
 	DECLARE @Buffer decimal(4,2) = 1.15
 
-	select p.Tag, SUM(w.Remaining) as Remaining
+	select p.Team, p.Tag, SUM(w.Remaining) as Remaining
 	INTO #Remaining
 	FROM #Projects p
 	JOIN WorkItemTags wt on wt.Tag = p.Tag
 	JOIN WorkItems w on w.WorkItemId = wt.WorkItemId
 	WHERE EXISTS (SELECT value FROM STRING_SPLIT(p.Activity, '|') WHERE value = w.Activity)
-	GROUP BY p.Tag
+	GROUP BY p.Team, p.Tag
 
 	SELECT *, CASE 
 	WHEN StartDate > GetDate() THEN StartDate ELSE GetDate() end as ActualStart
 	INTO #projects2
 	FROM #projects
 
-	select p.Tag, 
+	select 
+	p.Team,
+	p.Tag, 
 	p.TotalCapacity,
 	p.DevDedication,
 	FORMAT(r.Remaining, 'N1') as Remaining, 
@@ -33,9 +35,9 @@ BEGIN
 	FROM #Projects2 p
 	JOIN #Remaining r on r.Tag = p.Tag
 
-	INSERT INTO Projects (TimeStamp, Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate)
-	SELECT GetDate(), Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate
+	INSERT INTO Projects (Team, TimeStamp, Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate)
+	SELECT Team, GetDate(), Tag, TotalCapacity, DevDedication, Remaining, StartDate, TargetDate, DueDate
 	FROM #FinalResults
 
-	select * from #FinalResults
+	select * from #FinalResults order by Team, Tag, DueDate
 END

@@ -145,7 +145,7 @@ BEGIN
 			INSERT INTO #Teams (Id, Team)
 			SELECT Id, Name as Team
 			FROM Teams
-		END
+		END	
 	
 	select distinct EmployeeAdoId, IsDev
 	into #EmployeeActivity
@@ -154,40 +154,36 @@ BEGIN
 	JOIN #Iterations i2 on i2.Id = i.Id
 	order by EmployeeAdoId
 
+	SELECT w.WorkItemId, w.Estimate, w.EmployeeAdoId, w.AreaAdoId, it.Name, e.IsDev, wt.WorkItemId as TaggedWorkItemId
+	INTO #WorkItemsSubSet
+	FROM WorkItems w 
+	JOIN Iterations i on w.IterationId = i.Id  
+	JOIN #Iterations it on it.Id = i.Id
+	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId
+	LEFT JOIN #WorkItemTagIds wt on wt.WorkItemId = w.WorkItemId
+
+	CREATE NONCLUSTERED INDEX WorkItemTagIds_WorkItemId_Temp ON #WorkItemTagIds ([WorkItemId])
+
 	select 
 	distinct
 	i2.Name as Iteration,
 	t.name,
 
 	ISNULL((select sum(w.Estimate) 
-	from WorkItems w 
-	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Id = i.Id
-	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 1
-	JOIN #WorkItemTagIds wt on wt.WorkItemId = w.WorkItemId
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as IsComplianceDev,
+	FROM #WorkItemsSubSet w 
+	WHERE TaggedWorkItemId is not null AND w.IsDev = 1 AND w.AreaAdoId = a.Id and i2.Name = w.Name),0) as IsComplianceDev,
 
 	ISNULL((select sum(w.Estimate) 
-	from WorkItems w 
-	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Id = i.Id
-	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 1
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as TotalDev,
+	from #WorkItemsSubSet w 
+	WHERE w.IsDev = 1 AND w.AreaAdoId = a.Id and i2.Name = w.Name),0) as TotalDev,
 
 	ISNULL((select sum(w.Estimate) 
-	from WorkItems w 
-	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Id = i.Id
-	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 0
-	JOIN #WorkItemTagIds wt on wt.WorkItemId = w.WorkItemId
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as IsComplianceQA,
+	from #WorkItemsSubSet w 	
+	WHERE TaggedWorkItemId is not null AND w.IsDev = 0 AND w.AreaAdoId = a.Id and i2.Name = w.Name),0) as IsComplianceQA,
 
 	ISNULL((select sum(w.Estimate) 
-	from WorkItems w 
-	JOIN Iterations i on w.IterationId = i.Id 
-	JOIN #Iterations it on it.Id = i.Id
-	JOIN #EmployeeActivity e on e.EmployeeAdoId = w.EmployeeAdoId and e.IsDev = 0
-	WHERE w.AreaAdoId = a.Id and i2.Name = it.Name),0) as TotalQA
+	from #WorkItemsSubSet w 	
+	WHERE w.IsDev = 0 AND w.AreaAdoId = a.Id and i2.Name = w.Name),0) as TotalQA
 
 	INTO #Results
 	FROM Teams t

@@ -8,11 +8,13 @@ ALTER PROCEDURE [dbo].[Reporting_Rating]
 	@Sprints varchar(1000) = null,
 	@ShowOutput bit = 1,
 	@StartDate datetime = null,
-	@EndDate datetime = null
+	@EndDate datetime = null,
+	@SplitBySprint bit = 0,
+	@SplitByQuarter bit = 0
 AS
 BEGIN
 	DROP TABLE IF EXISTS #Sprints
-	CREATE TABLE #Sprints (Sprint varchar(200))
+	CREATE TABLE #Sprints (Sprint varchar(200), GroupName varchar(200))
 
 	IF @Sprints is not null
 	BEGIN
@@ -22,17 +24,18 @@ BEGIN
 		)
 		SELECT value INTO #IterationStrings FROM SplitStrings
 
-		INSERT INTO #Sprints (Sprint)
-		SELECT value
-		FROM #IterationStrings
+		INSERT INTO #Sprints (Sprint, GroupName)
+		SELECT value, case when @SplitBySprint = 1 then value else case when @SplitByQuarter = 1 then i.YearQuarter else 'All' end end
+		FROM #IterationStrings ist
+		join Iterations i on i.Name = ist.value
 	END	
 
 	IF @StartDate is not null AND @EndDate is not null
 	BEGIN
 		DELETE FROM #Sprints
 
-		INSERT INTO #Sprints (Sprint)
-		SELECT	Name
+		INSERT INTO #Sprints (Sprint, GroupName)
+		SELECT	Name, case when @SplitBySprint = 1 then Name else case when @SplitByQuarter = 1 then YearQuarter else 'All' end end
 		FROM	Iterations
 		WHERE	EndDate >= @StartDate AND EndDate <= @EndDate
 	END	
@@ -51,34 +54,34 @@ BEGIN
 	---------------END INPUTS---------------------
 
 	drop table if exists #tmp_stats_recent_velocity
-	select a1.EmployeeAdoId, sum(estimate) as RecentVelocity
+	select s.GroupName, a1.EmployeeAdoId, sum(estimate) as RecentVelocity
 	into #tmp_stats_recent_velocity
 	from WorkItems a1 
 	join Iterations i on i.id = a1.IterationId
 	join #Sprints s on s.Sprint = i.Name 
 	join Employees e on e.EmployeeAdoId = a1.EmployeeAdoId
 	where (e.IsFTE = 1 OR @ShowContractors = 1)
-	group by a1.EmployeeAdoId
+	group by a1.EmployeeAdoId, s.GroupName
 	order by sum(estimate) desc
 
 	drop table if exists #tmp_stats_recent_capacity
-	select dc.EmployeeAdoId, sum(Days) as RecentCapacity
+	select s.GroupName, dc.EmployeeAdoId, sum(Days) as RecentCapacity
 	into #tmp_stats_recent_capacity
 	from DevCapacity dc
 	join Iterations i on i.id = dc.IterationAdoId
 	join #Sprints s on s.Sprint = i.Name 
 	join Employees e on e.EmployeeAdoId = dc.EmployeeAdoId
 	where (e.IsFTE = 1 OR @ShowContractors = 1)
-	group by dc.EmployeeAdoId
+	group by dc.EmployeeAdoId, s.GroupName
 
 	drop table if exists #results
-	select tv.EmployeeAdoId, tv.RecentVelocity, tc.RecentCapacity, (tv.RecentVelocity/tc.RecentCapacity) as Efficiency, ty.Total
+	select tv.GroupName, tv.EmployeeAdoId, tv.RecentVelocity, tc.RecentCapacity, (tv.RecentVelocity/tc.RecentCapacity) as Efficiency, ty.Total
 	into #results
 	from #tmp_stats_recent_velocity tv
 	join #tmp_stats_recent_capacity tc
 	on tv.EmployeeAdoId = tc.EmployeeAdoId 
 	join #tmp_stats_year ty
-	on ty.EmployeeAdoId = tv.EmployeeAdoId
+	on ty.EmployeeAdoId = tv.EmployeeAdoId AND tv.GroupName = tc.GroupName
 	where RecentCapacity > 0
 	order by Efficiency desc
 
@@ -98,7 +101,7 @@ BEGIN
 	ORDER BY ROW_NUMBER() OVER (PARTITION BY e.EmployeeAdoId ORDER BY TimeStamp desc)
 
 	drop table if exists #results2
-	select e.EmployeeAdoId,
+	select r.GroupName, e.EmployeeAdoId,
 	(0.30 *((cast(RecentVelocity as decimal) / @RecentVelocityGoal)  +
 	(cast(Efficiency as decimal) / @RecentEfficiencyGoal) + 
 	(cast(Total as decimal) / @YearGoal))) as ADORating,
@@ -122,6 +125,7 @@ BEGIN
 	drop table if exists #finalresults
 
 	select 
+	r.GroupName,
 	case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
 	case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
 	e.activity,
@@ -141,7 +145,9 @@ BEGIN
 		BEGIN
 			IF @LimitedView = 1
 				BEGIN
+					INSERT INTO #RatingsResults1
 					select 
+					r.GroupName,
 					case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
 					case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
 					FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
@@ -153,6 +159,7 @@ BEGIN
 					where @FilterTeam is null OR e.TeamName = @FilterTeam
 					order by Efficiency desc
 
+					INSERT INTO #RatingsResults2
 					select 
 					Team,
 					Name, 
@@ -166,7 +173,9 @@ BEGIN
 				END
 			ELSE
 				BEGIN 
-					select 
+					INSERT INTO #RatingsResults1
+					select 					
+					r.GroupName,
 					case when ve.EmployeeAdoId is null then '' else e.TeamName end as Team, 
 					case when ve.EmployeeAdoId is null then '' else e.Name end as Name, 
 					FORMAT(r.RecentVelocity, 'N2') as RecentVelocity, 
@@ -179,7 +188,9 @@ BEGIN
 					where @FilterTeam is null OR e.TeamName = @FilterTeam
 					order by Efficiency desc
 
+					INSERT INTO #RatingsResults2
 					select 
+					r.GroupName,
 					Team,
 					Name, 
 					Activity,

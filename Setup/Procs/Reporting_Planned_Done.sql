@@ -3,7 +3,8 @@
 	@IterationQuarters varchar(1000) = null,
 	@StartDate datetime = null,
 	@Teams varchar(2000) = null,
-	@Advanced bit = 1	
+	@Advanced bit = 1,
+	@CombineTeams bit = 0
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -82,7 +83,7 @@ BEGIN
 	join #iterations i on i.Id = w.IterationId
 
 	select 
-	t.Name as TeamName, 
+	case when @CombineTeams = 1 then 'All Teams'else t.Name end as TeamName, 
 	i.name as Iteration,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.IsDeleted = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
 	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,

@@ -134,15 +134,17 @@ BEGIN
 	SELECT
 	r.Iteration,
 	r.name as Team,
-	FORMAT(TotalDev, 'N2') as 'Dev Total (days)',
-	FORMAT(TotalDev/td.Days, 'N2') as 'Dev Efficiency',
+	FORMAT(TotalDev, 'N2') as 'Dev Velocity (days)',
+	td.Days as 'Dev Capacity',
+	case when td.Days = 0 then '0.0' else FORMAT(TotalDev/td.Days, 'N2') end as 'Dev Efficiency',
 
-	FORMAT(TotalQA, 'N2') as 'QA Total (days)',
-	FORMAT(TotalQA/tq.Days, 'N2') as 'QA Efficiency',
+	FORMAT(TotalQA, 'N2') as 'QA Velocity (days)',
+	td.Days as 'QA Capacity',
+	case when tq.Days = 0 then '0.0' else FORMAT(TotalQA/tq.Days, 'N2') end as 'QA Efficiency',
 
 	FORMAT(ISNULL(tq.Days,0)+ISNULL(td.Days,0), 'N2') as 'Total',
 	FORMAT(ISNULL(TotalDev,0)+ISNULL(TotalQA,0), 'N2') as 'Velocity',	
-	case when ISNULL(tq.Days,0) = 0 OR ISNULL(td.Days,0) = 0 then 0.0 else FORMAT((ISNULL(TotalDev,0)+ISNULL(TotalQA,0))/(ISNULL(tq.Days,0)+ISNULL(td.Days,0)), 'N2') end as 'Efficiency'
+	case when ISNULL(tq.Days,0) = 0 OR ISNULL(td.Days,0) = 0 then '0.0' else FORMAT((ISNULL(TotalDev,0)+ISNULL(TotalQA,0))/(ISNULL(tq.Days,0)+ISNULL(td.Days,0)), 'N2') end as 'Efficiency'
 
 	INTO #FinalResults
 	FROM #Results r

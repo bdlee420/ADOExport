@@ -78,18 +78,27 @@ BEGIN
 		END	
 
 	select w.WorkItemId, w.IsDone, w.AreaAdoId, w.IterationId, w.IsPlanned, w.IsRemovedFromSprint, w.IsDeleted
-	into #tmp
+	into #tmp_rp
 	from WorkItemsPlannedDone w
-	join #iterations i on i.Id = w.IterationId
+	join #iterations i on i.Id = w.IterationId	 
+
+	SELECT i.Name as Sprint, te.Name as Team, t.WorkItemId, t.IsPlanned, t.IsDone, w.Estimate, w.WorkItemType, e.Name as Employee
+	FROM #tmp_rp t 
+	JOIN Iterations i on i.id = t.IterationId	
+	JOIN Teams te on te.AreaId = t.AreaAdoId
+	LEFT JOIN WorkItems w on w.WorkItemId = t.WorkItemId		
+	LEFT JOIN Employees e on e.EmployeeAdoId = w.EmployeeAdoId
+	ORDER BY i.Name, te.Name, e.Name, t.IsDone
 
 	select 
 	case when @CombineTeams = 1 then 'All Teams'else t.Name end as TeamName, 
 	i.name as Iteration,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.IsDeleted = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 0 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,
-	(select cast(count(*) as decimal) from #tmp tm where tm.IsRemovedFromSprint = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as RemovedFromSprint,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 0 and tm.IsDeleted = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as UnplannedDone,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as TotalDone,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 0 and tm.IsDone = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedDone,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 0 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as PlannedTotal,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 0 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as CommittedTotal,
+	(select cast(count(*) as decimal) from #tmp_rp tm where tm.IsRemovedFromSprint = 1 and tm.IsPlanned = 1 and tm.AreaAdoId = t.AreaId and i.Id = tm.IterationId) as RemovedFromSprint,
 
 	i.StartDate
 	into #results
@@ -106,6 +115,7 @@ BEGIN
 	sum(PlannedTotal) as PlannedTotal,
 	sum(UnplannedDone) as UnplannedDone,
 	sum(TotalDone) as TotalDone,
+	sum(CommittedTotal) as CommittedTotal,
 	sum(RemovedFromSprint) as RemovedFromSprint
 	into #FinalResults1
 	from #results
@@ -120,14 +130,19 @@ BEGIN
 	CASE 
 		WHEN PlannedTotal = 0 THEN 0
 		ELSE (CAST(PlannedDone AS DECIMAL(18, 2)) / (CAST(PlannedTotal AS DECIMAL(18, 2))-CAST(RemovedFromSprint AS DECIMAL(18, 2)))) * 100 
-	END as 'PercDone',
-	UnplannedDone,
-	TotalDone,
+	END as 'PercPlannedDone',
+	UnplannedDone,	
 	RemovedFromSprint,
 	CASE 
 		WHEN TotalDone = 0 THEN 0
 		ELSE (CAST(UnplannedDone AS DECIMAL(18, 2)) / CAST(TotalDone AS DECIMAL(18, 2))) * 100 
-	END as 'PercUnplanned'
+	END as 'PercUnplannedDone',
+	CommittedTotal,
+	CASE 
+		WHEN TotalDone = 0 AND PlannedTotal = 0 THEN 0
+		ELSE CAST(TotalDone AS DECIMAL(18, 2)) / CAST(CommittedTotal AS DECIMAL(18, 2)) * 100 
+	END as 'PercDone',
+	TotalDone
 	into #FinalResults
 	from #FinalResults1
 	order by TeamName, StartDate
@@ -138,10 +153,12 @@ BEGIN
 	PlannedDone,
 	RemovedFromSprint,
 	PlannedTotal,
-	FORMAT(PercDone, 'N2') + '%' as '% Done',
-	UnplannedDone,
-	TotalDone,
-	FORMAT(PercUnplanned, 'N2') + '%' as '% Unplanned'
+	FORMAT(PercPlannedDone, 'N2') + '%' as '% Planned Done',
+	UnplannedDone,	
+	FORMAT(PercUnplannedDone, 'N2') + '%' as '% Unplanned Done',
+	CommittedTotal,
+	FORMAT(PercDone, 'N2') + '%' as '% Committed Done',
+	TotalDone
 	FROM #FinalResults
 	ORDER BY Iteration, PercDone desc
 END

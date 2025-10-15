@@ -27,7 +27,7 @@ namespace ADOExport.Services
                 //Get all workitems that are closed as of the end date for this iteration
                 var iteration_done_workitems_end = await ADOService.GetDoneWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
 
-                //Get all workitems tas of the end date for this iteration
+                //Get all workitems as of the end date for this iteration
                 var iteration_all_workitems_end = await ADOService.GetAllWorkItemIdsAsOf_End(end_date, iteration, selectedTeams);
 
                 //Get rid of WorkItems that were done before the Current Sprint but for some reason still in the Current Sprint

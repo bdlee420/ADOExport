@@ -48,7 +48,8 @@ namespace ADOExport
                 || SettingsService.CurrentInputs.RunSettings.LoadWorkItems
                 || SettingsService.CurrentInputs.RunSettings.LoadCapacities
                 || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone
-                || SettingsService.CurrentInputs.RunSettings.LoadTags;
+                || SettingsService.CurrentInputs.RunSettings.LoadTags
+                || SettingsService.CurrentInputs.RunSettings.LoadEmployees;
 
             bool runTeams = SettingsService.CurrentInputs.RunSettings.LoadTeams
                 || SettingsService.CurrentInputs.RunSettings.LoadPlannedDone
@@ -105,6 +106,9 @@ namespace ADOExport
             {
                 var employeesDto = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees(workItemResult.WorkItemDetails));
                 ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees", () => SqlDataProvider.AddEmployees(employeesDto));
+                
+                var employeesDto2 = ExecuteHelper.ExecuteAndLogAction(stopwatch, "Get Employees", () => EmployeeService.GetEmployees2(workItemResult.WorkItemDetails));
+                ExecuteHelper.ExecuteAndLogAction(stopwatch, "Add Employees2", () => SqlDataProvider.AddEmployees2(employeesDto2));
             }
 
             if (runAreas)

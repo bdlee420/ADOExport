@@ -170,6 +170,64 @@ namespace ADOExport.Data
             }
         }
 
+        internal static void AddEmployees2(List<TeamMemberDto> employees)
+        {
+            using var connection = new SqlConnection(GetConnectionString());
+            connection.Open();
+
+            try
+            {
+                // Create a temporary table for Employees
+                var sql = @"
+                CREATE TABLE #TempEmployees2 (
+                    EmployeeAdoId VARCHAR(255),
+                    Name VARCHAR(255)
+                );";
+                connection.Execute(sql);
+
+                // Use SqlBulkCopy to insert data into the temporary table
+                using (var bulkCopy = new SqlBulkCopy(connection))
+                {
+                    bulkCopy.DestinationTableName = "#TempEmployees2";
+
+                    // Create a DataTable to hold the data
+                    using var dataTable = new DataTable();
+                    dataTable.Columns.Add("EmployeeAdoId", typeof(string));
+                    dataTable.Columns.Add("Name", typeof(string));
+
+                    // Populate the DataTable with data
+                    foreach (var employee in employees)
+                    {
+                        dataTable.Rows.Add(
+                            employee.EmployeeAdoId,
+                            employee.Name
+                        );
+                    }
+
+                    // Write data to the temporary table
+                    bulkCopy.WriteToServer(dataTable);
+                }
+
+                // Merge the data from the temporary table into the Employees table
+                var mergeQuery = @"
+                    MERGE INTO Employees2 AS target
+                    USING (SELECT EmployeeAdoId, Name FROM #TempEmployees2) AS source
+                    ON target.EmployeeAdoId = source.EmployeeAdoId
+                    WHEN MATCHED THEN
+                        UPDATE SET
+                            target.Name = source.Name                            
+                    WHEN NOT MATCHED THEN
+                        INSERT (EmployeeAdoId, Name, IsFTE, IsLead)
+                        VALUES (source.EmployeeAdoId, source.Name, 1, 0);";
+
+                connection.Execute(mergeQuery);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
         internal static void AddIterations(List<IterationDto> data)
         {
             using var connection = new SqlConnection(GetConnectionString());

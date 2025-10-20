@@ -36,6 +36,15 @@ CREATE TABLE Employees (
 	Rating tinyint
 )
 
+drop table if exists Employees2
+
+CREATE TABLE Employees2 (
+    EmployeeAdoId VARCHAR(255),
+    Name VARCHAR(255),
+	IsFTE bit,
+	IsLead bit
+)
+
 DROP TABLE IF EXISTS WorkItemTags
 
 CREATE TABLE WorkItemTags (

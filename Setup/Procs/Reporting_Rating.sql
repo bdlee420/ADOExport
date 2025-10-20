@@ -79,7 +79,7 @@ BEGIN
 	into #results
 	from #tmp_stats_recent_velocity tv
 	join #tmp_stats_recent_capacity tc
-	on tv.EmployeeAdoId = tc.EmployeeAdoId and tv.TeamAdoId = tc.TeamAdoId
+	on tv.EmployeeAdoId = tc.EmployeeAdoId and tv.TeamAdoId = tc.TeamAdoId and tv.GroupName = tc.GroupName
 	where RecentCapacity > 0
 	order by Efficiency desc
 
